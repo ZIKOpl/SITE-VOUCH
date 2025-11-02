@@ -30,7 +30,7 @@
 
             <% if (user?.isAdmin) { %>
               <div class="product-actions">
-                <button class="btn btn-outline small btn-delete" data-id="<%= p.id %>">🗑 Supprimer</button>
+                <button type="button" class="btn btn-outline small btn-delete" data-id="<%= p.id %>">Supprimer</button>
               </div>
             <% } %>
           </div>
@@ -104,12 +104,13 @@ document.addEventListener("click", async (e) => {
   const id = btn.dataset.id;
   if (!id) return;
 
-  const confirmed = await showConfirm("Souhaites-tu vraiment supprimer ce produit ?");
+  const confirmed = await showConfirm("Supprimer ce produit ?");
   if (!confirmed) return;
 
   try {
     const res = await fetch(`/api/product/${id}`, { method: "DELETE" });
     const json = await res.json();
+
     if (json.ok) {
       showToast("✅ Produit supprimé avec succès !", "success");
       setTimeout(() => location.reload(), 1000);
