@@ -18,30 +18,26 @@
       <article
         class="card vouch-card"
         tabindex="0"
-        data-vendor="<%- v.vendorLabel || (v.vendorId ? '@'+v.vendorId : 'Inconnu') %>"
-        data-note="<%- v.note %>"
-        data-item="x<%- v.qty %> <%- v.item %>"
-        data-price="<%- v.prix %>"
-        data-payment="<%- v.payment %>"
-        data-author="<%- v.anonymous ? 'Anonyme' : v.authorTag %>"
-        data-comment="<%- (v.comment || '').replace(/"/g,'&quot;') %>"
-        data-date="<%- v.createdAtFmt %>"
-        data-search="<%- (v.vendorLabel || (v.vendorId ? '@'+v.vendorId : 'Inconnu')) + ' ' + v.item + ' ' + v.prix + ' ' + v.payment + ' ' + (v.anonymous ? 'Anonyme' : v.authorTag) + ' ' + (v.comment || '') %>"
+        data-id="<%- v.id %>"
       >
         <div class="card head">
           <div class="badge">Note : <strong><%= "⭐".repeat(v.note) + "✩".repeat(5 - v.note) %></strong> (<%= v.note %>/5)</div>
           <div class="muted"><%= v.createdAtFmt %></div>
         </div>
+
         <div class="card-body">
           <p><span class="muted">Vendeur :</span> <strong><%= v.vendorLabel || (v.vendorId ? '@'+v.vendorId : 'Inconnu') %></strong></p>
           <p><span class="muted">Item :</span> <strong>x<%= v.qty %> <%= v.item %></strong> — <%= v.prix %> via <%= v.payment %></p>
           <p><span class="muted">Par :</span> <%= v.anonymous ? "Anonyme" : v.authorTag %></p>
           <p><span class="muted">Commentaire :</span> <%= (v.comment && v.comment.trim().length) ? v.comment : "—" %></p>
-          <% if (v.source === "site") { %><p class="muted">Origine : <strong>SITE</strong></p><% } %>
+          <% if (v.source === "site") { %>
+            <p class="muted">Origine : <strong>SITE</strong></p>
+          <% } %>
         </div>
+
         <% if (user && user.isAdmin) { %>
           <div style="margin-top:10px;text-align:right">
-            <button class="btn btn-outline btn-delete" data-del-id="<%- v.id %>">🗑 Supprimer</button>
+            <button class="btn btn-outline btn-delete" data-id="<%- v.id %>">🗑 Supprimer</button>
           </div>
         <% } %>
       </article>
@@ -49,6 +45,7 @@
   </div>
 </section>
 
+<!-- Modale de création -->
 <script type="text/template" id="tpl-create-vouch">
   <h3>Créer un vouch</h3>
   <form id="createVouchForm">
@@ -62,6 +59,7 @@
         </select>
       </div>
     </div>
+
     <div class="form-row">
       <div>
         <label>Quantité</label>
@@ -76,6 +74,7 @@
         </select>
       </div>
     </div>
+
     <div class="form-row">
       <div>
         <label>Prix (ex: 2.5€)</label>
@@ -90,12 +89,14 @@
         </select>
       </div>
     </div>
+
     <div class="form-row">
       <div>
         <label>Note /5</label>
         <select name="note" required>
-          <option value="5">5</option><option value="4">4</option><option value="3">3</option>
-          <option value="2">2</option><option value="1">1</option><option value="0">0</option>
+          <% for (let i = 5; i >= 0; i--) { %>
+            <option value="<%= i %>"><%= i %></option>
+          <% } %>
         </select>
       </div>
       <div>
@@ -105,17 +106,60 @@
         </select>
       </div>
     </div>
-    <div class="form-row">
-      <div class="full">
-        <label>Commentaire (optionnel)</label>
-        <textarea class="input" name="commentaire" rows="3" placeholder="Ton avis..."></textarea>
-      </div>
+
+    <div class="form-row full">
+      <label>Commentaire (optionnel)</label>
+      <textarea class="input" name="commentaire" rows="3" placeholder="Ton avis..."></textarea>
     </div>
-    <div class="form-row">
-      <div class="full" style="text-align:right">
-        <button type="button" class="btn btn-outline" id="cancelCreate">Annuler</button>
-        <button type="submit" class="btn btn-primary">Envoyer le vouch</button>
-      </div>
+
+    <div class="form-row full" style="text-align:right">
+      <button type="button" class="btn btn-outline" id="cancelCreate">Annuler</button>
+      <button type="submit" class="btn btn-primary">Envoyer le vouch</button>
     </div>
   </form>
+</script>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  // 🗑 Suppression d’un vouch
+  document.querySelectorAll('.btn-delete').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const id = btn.getAttribute('data-id');
+      const confirmed = await showConfirm("🗑 Supprimer ce vouch ?");
+      if (!confirmed) return;
+
+      try {
+        const res = await fetch(`/api/vouch/${id}`, { method: "DELETE" });
+        const json = await res.json();
+
+        if (json.ok) {
+          showToast("✅ Vouch supprimé avec succès", "success");
+          setTimeout(() => location.reload(), 1200);
+        } else {
+          showToast("❌ Erreur : " + json.message, "error");
+        }
+      } catch (err) {
+        showToast("❌ Erreur de communication avec le serveur", "error");
+      }
+    });
+  });
+
+  // 🔍 Recherche rapide
+  const search = document.getElementById('search');
+  const clear = document.getElementById('clearSearch');
+  const cards = [...document.querySelectorAll('.vouch-card')];
+
+  search?.addEventListener('input', () => {
+    const val = search.value.toLowerCase();
+    cards.forEach(c => {
+      const text = c.textContent.toLowerCase();
+      c.style.display = text.includes(val) ? '' : 'none';
+    });
+  });
+
+  clear?.addEventListener('click', () => {
+    search.value = '';
+    cards.forEach(c => (c.style.display = ''));
+  });
+});
 </script>
