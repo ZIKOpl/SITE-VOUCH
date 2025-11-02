@@ -7,18 +7,16 @@
     </div>
   </div>
 
-  <!-- Vendors -->
+  <!-- 🧍 Vendors -->
   <div class="card" style="margin-bottom:16px">
-    <div class="card head">
-      <div>Vendeurs</div>
-    </div>
+    <div class="card head"><div>Vendeurs</div></div>
     <div class="form-row">
-      <input id="vendorId" class="input" placeholder="ID discord (optionnel)">
+      <input id="vendorId" class="input" placeholder="ID Discord (optionnel)">
       <input id="vendorLabel" class="input" placeholder="Nom / label (obligatoire)">
       <button id="addVendor" class="btn btn-primary">Ajouter</button>
     </div>
     <div class="table" style="margin-top:12px">
-      <% (vendors||[]).forEach(v => { %>
+      <% (vendors || []).forEach(v => { %>
         <div class="row">
           <div><strong><%- v.label %></strong> <span class="muted"><%- v.id ? '('+v.id+')' : '' %></span></div>
           <div class="actions">
@@ -29,7 +27,7 @@
     </div>
   </div>
 
-  <!-- Items -->
+  <!-- 📦 Items -->
   <div class="card" style="margin-bottom:16px">
     <div class="card head"><div>Items</div></div>
     <div class="form-row">
@@ -37,7 +35,7 @@
       <button id="addItem" class="btn btn-primary">Ajouter</button>
     </div>
     <div class="table" style="margin-top:12px">
-      <% (items||[]).forEach(it => { %>
+      <% (items || []).forEach(it => { %>
         <div class="row">
           <div><%- it %></div>
           <div class="actions">
@@ -48,7 +46,7 @@
     </div>
   </div>
 
-  <!-- Payments -->
+  <!-- 💳 Moyens de paiement -->
   <div class="card">
     <div class="card head"><div>Moyens de paiement</div></div>
     <div class="form-row">
@@ -56,7 +54,7 @@
       <button id="addPay" class="btn btn-primary">Ajouter</button>
     </div>
     <div class="table" style="margin-top:12px">
-      <% (payments||[]).forEach(p => { %>
+      <% (payments || []).forEach(p => { %>
         <div class="row">
           <div><%- p %></div>
           <div class="actions">
@@ -69,50 +67,109 @@
 </section>
 
 <script>
-async function postJSON(url, body){
-  const res = await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+/* --- Helper API --- */
+async function postJSON(url, body) {
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
   const json = await res.json();
-  if(!res.ok) throw new Error(json.message||'Erreur');
+  if (!res.ok) throw new Error(json.message || 'Erreur serveur');
   return json;
 }
 
-document.getElementById('addVendor')?.addEventListener('click', async ()=>{
+/* --- Ajout d’un vendeur --- */
+document.getElementById('addVendor')?.addEventListener('click', async () => {
   const id = document.getElementById('vendorId').value.trim();
   const label = document.getElementById('vendorLabel').value.trim();
-  if(!label){ alert('Le label est obligatoire.'); return; }
-  try{ await postJSON('/api/config/vendor/add',{id,label}); location.reload(); }catch(e){ alert('❌ '+e.message); }
+  if (!label) return showToast('⚠️ Le label est obligatoire.', 'error');
+
+  try {
+    await postJSON('/api/config/vendor/add', { id, label });
+    showToast('✅ Vendeur ajouté avec succès', 'success');
+    setTimeout(() => location.reload(), 1000);
+  } catch (e) {
+    showToast('❌ ' + e.message, 'error');
+  }
 });
 
-document.querySelectorAll('[data-remove-vendor]')?.forEach(btn=>{
-  btn.addEventListener('click', async ()=>{
+/* --- Suppression d’un vendeur --- */
+document.querySelectorAll('[data-remove-vendor]')?.forEach(btn => {
+  btn.addEventListener('click', async () => {
     const key = btn.getAttribute('data-remove-vendor');
-    try{ await postJSON('/api/config/vendor/remove',{key}); location.reload(); }catch(e){ alert('❌ '+e.message); }
+    const confirmed = await showConfirm(`Supprimer le vendeur "${key}" ?`);
+    if (!confirmed) return;
+
+    try {
+      await postJSON('/api/config/vendor/remove', { key });
+      showToast('✅ Vendeur supprimé avec succès', 'success');
+      setTimeout(() => location.reload(), 1000);
+    } catch (e) {
+      showToast('❌ ' + e.message, 'error');
+    }
   });
 });
 
-document.getElementById('addItem')?.addEventListener('click', async ()=>{
+/* --- Ajout d’un item --- */
+document.getElementById('addItem')?.addEventListener('click', async () => {
   const name = document.getElementById('itemName').value.trim();
-  if(!name){ alert("Entrez un nom d'item"); return; }
-  try{ await postJSON('/api/config/item/add',{name}); location.reload(); }catch(e){ alert('❌ '+e.message); }
+  if (!name) return showToast("⚠️ Entrez un nom d'item.", 'error');
+
+  try {
+    await postJSON('/api/config/item/add', { name });
+    showToast('✅ Item ajouté avec succès', 'success');
+    setTimeout(() => location.reload(), 1000);
+  } catch (e) {
+    showToast('❌ ' + e.message, 'error');
+  }
 });
 
-document.querySelectorAll('[data-remove-item]')?.forEach(btn=>{
-  btn.addEventListener('click', async ()=>{
+/* --- Suppression d’un item --- */
+document.querySelectorAll('[data-remove-item]')?.forEach(btn => {
+  btn.addEventListener('click', async () => {
     const name = btn.getAttribute('data-remove-item');
-    try{ await postJSON('/api/config/item/remove',{name}); location.reload(); }catch(e){ alert('❌ '+e.message); }
+    const confirmed = await showConfirm(`Supprimer l’item "${name}" ?`);
+    if (!confirmed) return;
+
+    try {
+      await postJSON('/api/config/item/remove', { name });
+      showToast('✅ Item supprimé avec succès', 'success');
+      setTimeout(() => location.reload(), 1000);
+    } catch (e) {
+      showToast('❌ ' + e.message, 'error');
+    }
   });
 });
 
-document.getElementById('addPay')?.addEventListener('click', async ()=>{
+/* --- Ajout d’un moyen de paiement --- */
+document.getElementById('addPay')?.addEventListener('click', async () => {
   const name = document.getElementById('payName').value.trim();
-  if(!name){ alert('Entrez un moyen de paiement'); return; }
-  try{ await postJSON('/api/config/payment/add',{name}); location.reload(); }catch(e){ alert('❌ '+e.message); }
+  if (!name) return showToast('⚠️ Entrez un moyen de paiement.', 'error');
+
+  try {
+    await postJSON('/api/config/payment/add', { name });
+    showToast('✅ Moyen de paiement ajouté', 'success');
+    setTimeout(() => location.reload(), 1000);
+  } catch (e) {
+    showToast('❌ ' + e.message, 'error');
+  }
 });
 
-document.querySelectorAll('[data-remove-pay]')?.forEach(btn=>{
-  btn.addEventListener('click', async ()=>{
+/* --- Suppression d’un moyen de paiement --- */
+document.querySelectorAll('[data-remove-pay]')?.forEach(btn => {
+  btn.addEventListener('click', async () => {
     const name = btn.getAttribute('data-remove-pay');
-    try{ await postJSON('/api/config/payment/remove',{name}); location.reload(); }catch(e){ alert('❌ '+e.message); }
+    const confirmed = await showConfirm(`Supprimer le moyen de paiement "${name}" ?`);
+    if (!confirmed) return;
+
+    try {
+      await postJSON('/api/config/payment/remove', { name });
+      showToast('✅ Moyen de paiement supprimé', 'success');
+      setTimeout(() => location.reload(), 1000);
+    } catch (e) {
+      showToast('❌ ' + e.message, 'error');
+    }
   });
 });
 </script>
