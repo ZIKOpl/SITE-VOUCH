@@ -8,6 +8,15 @@
     </div>
 
     <div id="products" class="grid">
+      <!-- ✅ Stockage sécurisé des produits -->
+      <script id="products-data" type="application/json">
+        <%- JSON.stringify(products || []).replace(/</g, '\\u003c') %>
+      </script>
+
+      <script>
+        window.PRODUCTS = JSON.parse(document.getElementById('products-data').textContent);
+      </script>
+
       <% if (!products.length) { %>
         <div class="card"><p class="muted">Aucun produit n’a encore été ajouté.</p></div>
       <% } else { %>
@@ -30,8 +39,8 @@
 
             <% if (user?.isAdmin) { %>
               <div class="product-actions">
-                <button  class="btn btn-outline small"  onclick="editProductById('<%= p.id %>')">Modifier</button> 
-                <button class="btn btn-outline small" data-id="<%= p.id %>" onclick="deleteProduct(this.dataset.id)">Supprimer</button>
+                <button class="btn btn-outline small" onclick="editProductById('<%= p.id %>')">📝 Modifier</button>
+                <button class="btn btn-outline small" data-id="<%= p.id %>" onclick="deleteProduct(this.dataset.id)">🗑 Supprimer</button>
               </div>
             <% } %>
           </div>
@@ -41,7 +50,7 @@
   </div>
 </section>
 
-<!-- Modal d’ajout / modification de produit -->
+<!-- Modal d’ajout / modification -->
 <div class="modal-overlay" id="modal">
   <div class="modal">
     <button class="modal-close" onclick="closeModal()">×</button>
@@ -69,6 +78,7 @@
 </div>
 
 <script>
+/* --- Ouvrir / fermer la modale --- */
 function openModal(edit = false) {
   document.getElementById("modal").classList.add("show");
   document.getElementById("modalTitle").textContent = edit ? "Modifier le produit" : "Ajouter un produit";
@@ -79,16 +89,26 @@ function closeModal() {
   document.querySelector('[name="id"]').value = '';
 }
 
-function editProduct(p) {
+/* --- Fonction appelée quand on clique sur "Modifier" --- */
+function editProductById(id) {
+  const products = window.PRODUCTS || [];
+  const p = products.find(prod => String(prod.id) === String(id));
+
+  if (!p) {
+    showToast("❌ Produit introuvable", "error");
+    return;
+  }
+
   openModal(true);
   const form = document.getElementById("productForm");
+  form.id.value = p.id || '';
   form.name.value = p.name || '';
   form.price.value = p.price || '';
   form.description.value = p.description || '';
   form.image.value = p.image || '';
-  form.id.value = p.id;
 }
 
+/* --- Gestion du formulaire d’ajout / édition --- */
 async function submitProduct(e) {
   e.preventDefault();
   const form = e.target;
@@ -98,23 +118,43 @@ async function submitProduct(e) {
   const url = data.id ? `/api/product/${data.id}` : "/api/product";
   const method = data.id ? "PUT" : "POST";
 
-  const res = await fetch(url, {
-    method,
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data)
-  });
+  try {
+    const res = await fetch(url, {
+      method,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data)
+    });
 
-  const json = await res.json();
-  if (json.ok) location.reload();
-  else alert("Erreur : " + json.message);
+    const json = await res.json();
+
+    if (json.ok) {
+      showToast("✅ Produit enregistré avec succès", "success");
+      setTimeout(() => location.reload(), 1000);
+    } else {
+      showToast("❌ " + (json.message || "Erreur lors de l'enregistrement"), "error");
+    }
+  } catch (err) {
+    showToast("❌ Erreur de communication avec le serveur", "error");
+  }
 }
 
+/* --- Suppression d’un produit --- */
 async function deleteProduct(id) {
-  const confirmed = await showConfirm("Supprimer ce produit ?");
+  const confirmed = await showConfirm("🗑 Supprimer ce produit ?");
   if (!confirmed) return;
-  const res = await fetch(`/api/product/${id}`, { method: "DELETE" });
-  const json = await res.json();
-  if (json.ok) location.reload();
-  else alert("Erreur suppression produit");
+
+  try {
+    const res = await fetch(`/api/product/${id}`, { method: "DELETE" });
+    const json = await res.json();
+
+    if (json.ok) {
+      showToast("✅ Produit supprimé avec succès", "success");
+      setTimeout(() => location.reload(), 1000);
+    } else {
+      showToast("❌ Erreur suppression produit", "error");
+    }
+  } catch (err) {
+    showToast("❌ Erreur réseau ou serveur", "error");
+  }
 }
 </script>
