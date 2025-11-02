@@ -489,3 +489,6 @@ body.clicking::after {
   text-align: right;
   margin-top: 10px;
 }
+.product-desc {
+  white-space: pre-line; /* Respecte les sauts de ligne du texte */
+}

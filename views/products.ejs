@@ -9,41 +9,29 @@
 
     <div id="products" class="grid">
       <% if (!products.length) { %>
-        <div class="card">
-          <p class="muted">Aucun produit n’a encore été ajouté.</p>
-        </div>
+        <div class="card"><p class="muted">Aucun produit n’a encore été ajouté.</p></div>
       <% } else { %>
         <% products.forEach(p => { %>
           <div class="card product-card">
-            <!-- Image du produit (générée si absente) -->
             <div class="product-image">
-              <img src="<%= p.image || `https://api.dicebear.com/8.x/shapes/svg?seed=${encodeURIComponent(p.name)}` %>" alt="<%= p.name %>">
+              <img src="<%= p.image || `/assets/img/default.png` %>" alt="<%= p.name %>">
             </div>
 
-            <!-- Nom et description -->
             <div class="product-body">
               <h2 class="product-name"><%= p.name %></h2>
+              <p class="muted product-desc"><%= p.description || "Aucune description fournie." %></p>
 
-              <% if (p.description) { %>
-                <p class="muted"><%= p.description %></p>
-              <% } else { %>
-                <p class="muted">Aucune description fournie.</p>
-              <% } %>
-
-              <!-- Prix -->
               <% if (p.price && p.price > 0) { %>
-                <div class="price-tag">
-                  <span><%= p.price.toFixed(2) %> €</span>
-                </div>
+                <div class="price-tag"><%= p.price.toFixed(2) %> €</div>
               <% } else { %>
                 <div class="price-tag muted">Prix sur demande</div>
               <% } %>
             </div>
 
-            <!-- Bouton admin -->
             <% if (user?.isAdmin) { %>
               <div class="product-actions">
-                <button class="btn btn-outline small" data-id="<%= p.id %>" onclick="deleteProduct(this.dataset.id)">🗑 Supprimer</button>
+                <button  class="btn btn-outline small"  onclick="editProductById('<%= p.id %>')">Modifier</button> 
+                <button class="btn btn-outline small" data-id="<%= p.id %>" onclick="deleteProduct(this.dataset.id)">Supprimer</button>
               </div>
             <% } %>
           </div>
@@ -53,13 +41,14 @@
   </div>
 </section>
 
-<!-- Modal d’ajout de produit -->
+<!-- Modal d’ajout / modification de produit -->
 <div class="modal-overlay" id="modal">
   <div class="modal">
     <button class="modal-close" onclick="closeModal()">×</button>
-    <h3>Ajouter un produit</h3>
+    <h3 id="modalTitle">Ajouter un produit</h3>
 
-    <form id="addForm" onsubmit="return submitProduct(event)">
+    <form id="productForm" onsubmit="return submitProduct(event)">
+      <input type="hidden" name="id">
       <div class="form-row">
         <input type="text" name="name" placeholder="Nom du produit" class="input" required>
         <input type="number" step="0.01" name="price" placeholder="Prix (optionnel)" class="input">
@@ -73,32 +62,48 @@
 
       <div style="margin-top:14px;text-align:right;">
         <button type="button" class="btn btn-ghost" onclick="closeModal()">Annuler</button>
-        <button type="submit" class="btn btn-primary">Ajouter</button>
+        <button type="submit" class="btn btn-primary">Enregistrer</button>
       </div>
     </form>
   </div>
 </div>
 
 <script>
-function openModal() {
+function openModal(edit = false) {
   document.getElementById("modal").classList.add("show");
+  document.getElementById("modalTitle").textContent = edit ? "Modifier le produit" : "Ajouter un produit";
 }
 function closeModal() {
   document.getElementById("modal").classList.remove("show");
+  document.getElementById("productForm").reset();
+  document.querySelector('[name="id"]').value = '';
+}
+
+function editProduct(p) {
+  openModal(true);
+  const form = document.getElementById("productForm");
+  form.name.value = p.name || '';
+  form.price.value = p.price || '';
+  form.description.value = p.description || '';
+  form.image.value = p.image || '';
+  form.id.value = p.id;
 }
 
 async function submitProduct(e) {
   e.preventDefault();
   const form = e.target;
   const data = Object.fromEntries(new FormData(form));
-  if (!data.name.trim()) return alert("Nom du produit requis !");
   data.price = data.price ? parseFloat(data.price) : null;
 
-  const res = await fetch("/api/product", {
-    method: "POST",
+  const url = data.id ? `/api/product/${data.id}` : "/api/product";
+  const method = data.id ? "PUT" : "POST";
+
+  const res = await fetch(url, {
+    method,
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data)
   });
+
   const json = await res.json();
   if (json.ok) location.reload();
   else alert("Erreur : " + json.message);
