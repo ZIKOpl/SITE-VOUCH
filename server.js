@@ -198,6 +198,40 @@ app.delete("/api/product/:id", ensureLogged, ensureAdmin, async (req, res) => {
   res.json({ ok: true });
 });
 
+// ✏️ Modification d’un produit
+app.put("/api/product/:id", ensureLogged, ensureAdmin, async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    const { name, price, description, image } = req.body;
+    const gid = process.env.GUILD_ID;
+    const guild = await Guild.findOne({ guildId: gid });
+
+    if (!guild || !guild.products) {
+      return res.status(404).json({ ok: false, message: "Aucun produit trouvé." });
+    }
+
+    const index = guild.products.findIndex(p => p.id === id);
+    if (index === -1) {
+      return res.status(404).json({ ok: false, message: "Produit introuvable." });
+    }
+
+    // Mise à jour du produit
+    guild.products[index] = {
+      ...guild.products[index],
+      name,
+      description,
+      price,
+      image
+    };
+
+    await guild.save();
+    res.json({ ok: true });
+  } catch (err) {
+    console.error("Erreur modification produit :", err);
+    res.status(500).json({ ok: false, message: "Erreur serveur lors de la modification." });
+  }
+});
+
 // ----------- API VOUCH -----------
 app.post("/api/vouch", ensureLogged, async (req, res) => {
   try {
