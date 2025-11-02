@@ -492,90 +492,75 @@ body.clicking::after {
 .product-desc {
   white-space: pre-line; /* Respecte les sauts de ligne du texte */
 }
-/* ===============================
-   🔔 TOAST NOTIFICATIONS
-   =============================== */
+
+/* =======================
+   ✅ Toasts visuels
+======================= */
 #toasts {
   position: fixed;
   bottom: 20px;
   right: 20px;
+  z-index: 9999;
   display: flex;
   flex-direction: column;
   gap: 10px;
-  z-index: 99999;
 }
 
 .toast {
-  min-width: 260px;
-  max-width: 320px;
-  background: var(--panel2);
-  border: 1px solid var(--border);
-  border-left: 4px solid var(--primary);
-  color: var(--text);
-  padding: 12px 16px;
-  border-radius: 12px;
-  box-shadow: 0 10px 22px rgba(0,0,0,0.4);
   opacity: 0;
-  transform: translateX(120%);
-  animation: toastSlideIn 0.4s ease forwards;
+  transform: translateX(30px);
+  background: #111;
+  color: #fff;
+  padding: 12px 18px;
+  border-radius: 10px;
+  font-size: 15px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+  border-left: 4px solid #555;
+  transition: all 0.3s ease;
+  min-width: 240px;
 }
 
-.toast.success { border-left-color: #2ecc71; }
-.toast.error { border-left-color: #e74c3c; }
-.toast.warning { border-left-color: #f1c40f; }
-.toast.info { border-left-color: #3498db; }
+.toast.show {
+  opacity: 1;
+  transform: translateX(0);
+}
 
-@keyframes toastSlideIn {
-  from { opacity: 0; transform: translateX(120%); }
-  to { opacity: 1; transform: translateX(0); }
-}
-@keyframes toastFadeOut {
-  from { opacity: 1; transform: translateX(0); }
-  to { opacity: 0; transform: translateX(150%); }
-}
-/* ===============================
-   ⚠️ MODALE CONFIRMATION CUSTOM
-   =============================== */
+.toast.success { border-left-color: #00d26a; }
+.toast.error   { border-left-color: #ff4040; }
+.toast.info    { border-left-color: #5c7aff; }
+
+/* =======================
+   ✅ Confirm Box
+======================= */
 .confirm-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(5px);
+  background: rgba(0,0,0,0.6);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 99999;
-  animation: fadeIn 0.2s ease forwards;
+  z-index: 9998;
+  animation: fadeIn 0.2s ease;
 }
 
 .confirm-box {
-  background: var(--panel2);
-  border: 1px solid var(--border);
-  border-radius: 16px;
+  background: #0d0d0d;
+  color: #fff;
   padding: 20px 24px;
-  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.5);
+  border-radius: 12px;
+  border: 1px solid #222;
+  box-shadow: 0 10px 24px rgba(0,0,0,0.5);
+  width: min(90%, 340px);
   text-align: center;
-  color: var(--text);
-  max-width: 320px;
-  animation: scaleIn 0.25s ease;
 }
 
 .confirm-box p {
-  margin-bottom: 18px;
+  margin-bottom: 16px;
   font-size: 16px;
 }
 
 .confirm-buttons {
   display: flex;
   justify-content: center;
-  gap: 10px;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-@keyframes scaleIn {
-  from { transform: scale(0.95); opacity: 0; }
-  to { transform: scale(1); opacity: 1; }
+  gap: 12px;
 }

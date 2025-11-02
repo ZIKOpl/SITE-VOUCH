@@ -154,32 +154,60 @@ window.showToast = function (message, type = "info", duration = 4000) {
     setTimeout(() => toast.remove(), 500);
   }, duration);
 };
-// ===============================
-// ⚠️ CONFIRMATION MODALE CUSTOM
-// ===============================
-window.showConfirm = function (message) {
+
+// ===========================
+// ✅ Toast System
+// ===========================
+
+function showToast(message, type = "info") {
+  const toastContainer = document.getElementById("toasts");
+  if (!toastContainer) return;
+
+  const toast = document.createElement("div");
+  toast.className = `toast ${type}`;
+  toast.innerHTML = `
+    <div class="toast-content">${message}</div>
+  `;
+
+  toastContainer.appendChild(toast);
+
+  // Animation d’apparition
+  setTimeout(() => toast.classList.add("show"), 50);
+
+  // Disparition après 4s
+  setTimeout(() => {
+    toast.classList.remove("show");
+    setTimeout(() => toast.remove(), 300);
+  }, 4000);
+}
+
+// ===========================
+// ✅ Confirm Dialog personnalisé
+// ===========================
+
+function showConfirm(message) {
   return new Promise((resolve) => {
-    const modal = document.createElement("div");
-    modal.className = "confirm-overlay";
-    modal.innerHTML = `
+    const overlay = document.createElement("div");
+    overlay.className = "confirm-overlay";
+    overlay.innerHTML = `
       <div class="confirm-box">
         <p>${message}</p>
         <div class="confirm-buttons">
-          <button class="btn btn-primary" id="confirm-ok">OK</button>
-          <button class="btn btn-ghost" id="confirm-cancel">Annuler</button>
+          <button class="btn btn-primary yes">Oui</button>
+          <button class="btn btn-outline no">Annuler</button>
         </div>
       </div>
     `;
-    document.body.appendChild(modal);
+    document.body.appendChild(overlay);
 
-    // Fermeture / résolution
-    modal.querySelector("#confirm-ok").onclick = () => {
-      modal.remove();
+    overlay.querySelector(".yes").onclick = () => {
       resolve(true);
+      overlay.remove();
     };
-    modal.querySelector("#confirm-cancel").onclick = () => {
-      modal.remove();
+    overlay.querySelector(".no").onclick = () => {
       resolve(false);
+      overlay.remove();
     };
   });
-};
+}
+
