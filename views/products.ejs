@@ -8,15 +8,6 @@
     </div>
 
     <div id="products" class="grid">
-      <!-- ✅ Stockage sécurisé des produits -->
-      <script id="products-data" type="application/json">
-        <%- JSON.stringify(products || []).replace(/</g, '\\u003c') %>
-      </script>
-
-      <script>
-        window.PRODUCTS = JSON.parse(document.getElementById('products-data').textContent);
-      </script>
-
       <% if (!products.length) { %>
         <div class="card"><p class="muted">Aucun produit n’a encore été ajouté.</p></div>
       <% } else { %>
@@ -39,8 +30,7 @@
 
             <% if (user?.isAdmin) { %>
               <div class="product-actions">
-                <button class="btn btn-outline small" onclick="editProductById('<%= p.id %>')">📝 Modifier</button>
-                <button class="btn btn-outline small" data-id="<%= p.id %>" onclick="deleteProduct(this.dataset.id)">🗑 Supprimer</button>
+                <button class="btn btn-outline small btn-delete" data-id="<%= p.id %>">🗑 Supprimer</button>
               </div>
             <% } %>
           </div>
@@ -50,14 +40,13 @@
   </div>
 </section>
 
-<!-- Modal d’ajout / modification -->
+<!-- Modal d’ajout de produit -->
 <div class="modal-overlay" id="modal">
   <div class="modal">
     <button class="modal-close" onclick="closeModal()">×</button>
-    <h3 id="modalTitle">Ajouter un produit</h3>
+    <h3>Ajouter un produit</h3>
 
     <form id="productForm" onsubmit="return submitProduct(event)">
-      <input type="hidden" name="id">
       <div class="form-row">
         <input type="text" name="name" placeholder="Nom du produit" class="input" required>
         <input type="number" step="0.01" name="price" placeholder="Prix (optionnel)" class="input">
@@ -71,90 +60,64 @@
 
       <div style="margin-top:14px;text-align:right;">
         <button type="button" class="btn btn-ghost" onclick="closeModal()">Annuler</button>
-        <button type="submit" class="btn btn-primary">Enregistrer</button>
+        <button type="submit" class="btn btn-primary">Ajouter</button>
       </div>
     </form>
   </div>
 </div>
 
 <script>
-/* --- Ouvrir / fermer la modale --- */
-function openModal(edit = false) {
+function openModal() {
   document.getElementById("modal").classList.add("show");
-  document.getElementById("modalTitle").textContent = edit ? "Modifier le produit" : "Ajouter un produit";
 }
 function closeModal() {
   document.getElementById("modal").classList.remove("show");
   document.getElementById("productForm").reset();
-  document.querySelector('[name="id"]').value = '';
 }
 
-/* --- Fonction appelée quand on clique sur "Modifier" --- */
-function editProductById(id) {
-  const products = window.PRODUCTS || [];
-  const p = products.find(prod => String(prod.id) === String(id));
-
-  if (!p) {
-    showToast("❌ Produit introuvable", "error");
-    return;
-  }
-
-  openModal(true);
-  const form = document.getElementById("productForm");
-  form.id.value = p.id || '';
-  form.name.value = p.name || '';
-  form.price.value = p.price || '';
-  form.description.value = p.description || '';
-  form.image.value = p.image || '';
-}
-
-/* --- Gestion du formulaire d’ajout / édition --- */
+// ✅ Ajouter un produit
 async function submitProduct(e) {
   e.preventDefault();
   const form = e.target;
   const data = Object.fromEntries(new FormData(form));
   data.price = data.price ? parseFloat(data.price) : null;
 
-  const url = data.id ? `/api/product/${data.id}` : "/api/product";
-  const method = data.id ? "PUT" : "POST";
+  const res = await fetch("/api/product", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data)
+  });
 
-  try {
-    const res = await fetch(url, {
-      method,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data)
-    });
-
-    const json = await res.json();
-
-    if (json.ok) {
-      showToast("✅ Produit enregistré avec succès", "success");
-      setTimeout(() => location.reload(), 1000);
-    } else {
-      showToast("❌ " + (json.message || "Erreur lors de l'enregistrement"), "error");
-    }
-  } catch (err) {
-    showToast("❌ Erreur de communication avec le serveur", "error");
+  const json = await res.json();
+  if (json.ok) {
+    showToast("✅ Produit ajouté avec succès !", "success");
+    setTimeout(() => location.reload(), 1000);
+  } else {
+    showToast("❌ Erreur : " + json.message, "error");
   }
 }
 
-/* --- Suppression d’un produit --- */
-async function deleteProduct(id) {
-  const confirmed = await showConfirm("🗑 Supprimer ce produit ?");
+// ✅ Supprimer un produit
+document.addEventListener("click", async (e) => {
+  const btn = e.target.closest(".btn-delete");
+  if (!btn) return;
+  const id = btn.dataset.id;
+  if (!id) return;
+
+  const confirmed = await showConfirm("Souhaites-tu vraiment supprimer ce produit ?");
   if (!confirmed) return;
 
   try {
     const res = await fetch(`/api/product/${id}`, { method: "DELETE" });
     const json = await res.json();
-
     if (json.ok) {
-      showToast("✅ Produit supprimé avec succès", "success");
+      showToast("✅ Produit supprimé avec succès !", "success");
       setTimeout(() => location.reload(), 1000);
     } else {
       showToast("❌ Erreur suppression produit", "error");
     }
   } catch (err) {
-    showToast("❌ Erreur réseau ou serveur", "error");
+    showToast("❌ " + err.message, "error");
   }
-}
+});
 </script>
