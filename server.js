@@ -17,9 +17,9 @@ const __dirname = path.dirname(__filename);
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static("public"));
+app.use(express.static('public'));
 
-// EJS + Layouts
+// EJS + Layouts + Static
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
 app.use(expressLayouts);
@@ -51,7 +51,7 @@ passport.use(new DiscordStrategy({
     const target = guilds.find(g => g.id === process.env.GUILD_ID);
     const isAdmin = !!(target && (target.permissions & ADMIN_BIT));
     done(null, { id: profile.id, username: profile.username, avatar: profile.avatar, isAdmin });
-  } catch {
+  } catch (e) {
     done(null, { id: profile.id, username: profile.username, avatar: profile.avatar, isAdmin: false });
   }
 }));
@@ -59,7 +59,7 @@ passport.use(new DiscordStrategy({
 app.use(passport.initialize());
 app.use(passport.session());
 
-// Locals pour les vues
+// Middleware locals (pour les vues)
 app.use((req, res, next) => {
   res.locals.user = req.user;
   res.locals.path = req.path;
@@ -85,7 +85,6 @@ function fmtDate(ts) {
     hour: "2-digit", minute: "2-digit"
   });
 }
-
 function computeLeaderboard(gdata) {
   const counts = new Map();
   (gdata.vouches || []).forEach(v => {
@@ -100,10 +99,12 @@ function computeLeaderboard(gdata) {
   }));
 }
 
-const ensureLogged = (req, res, next) => req.user ? next() : res.redirect("/auth/discord");
-const ensureAdmin = (req, res, next) => req.user?.isAdmin ? next() : res.status(403).send("Accès refusé (admin requis).");
+const ensureLogged = (req, res, next) =>
+  req.user ? next() : res.redirect("/auth/discord");
+const ensureAdmin = (req, res, next) =>
+  req.user?.isAdmin ? next() : res.status(403).send("Accès refusé (admin requis).");
 
-// Recalcul des IDs de vouches
+// Recalculate vouch IDs
 async function resequenceGuild(guild) {
   guild.vouches = (guild.vouches || []).slice().sort((a, b) => a.createdAt - b.createdAt);
   let i = 1;
@@ -116,13 +117,14 @@ async function resequenceGuild(guild) {
 app.get("/auth/discord", passport.authenticate("discord"));
 app.get("/auth/discord/callback",
   passport.authenticate("discord", { failureRedirect: "/login-failed" }),
-  (req, res) => res.redirect("/")
-);
+  (req, res) => res.redirect("/"));
 app.get("/logout", (req, res) => req.logout(() => res.redirect("/")));
 app.get("/login-failed", (req, res) => res.send("Connexion Discord échouée."));
 
 // ----------- PAGES -----------
-app.get("/", (req, res) => res.render("home", { user: req.user, title: "Accueil", path: "/" }));
+app.get("/", (req, res) =>
+  res.render("home", { user: req.user, title: "Accueil", path: "/" })
+);
 
 app.get("/vouches", ensureLogged, async (req, res) => {
   const gid = process.env.GUILD_ID;
@@ -196,41 +198,6 @@ app.delete("/api/product/:id", ensureLogged, ensureAdmin, async (req, res) => {
   res.json({ ok: true });
 });
 
-// ✏️ Route pour modification produit (corrigée)
-app.put("/api/product/:id", ensureLogged, ensureAdmin, async (req, res) => {
-  try {
-    const id = parseInt(req.params.id);
-    const { name, price, description, image } = req.body;
-    const gid = process.env.GUILD_ID;
-    const guild = await Guild.findOne({ guildId: gid });
-
-    if (!guild || !guild.products) {
-      return res.status(404).json({ ok: false, message: "Aucun produit trouvé." });
-    }
-
-    const index = guild.products.findIndex(p => p.id === id);
-    if (index === -1) {
-      return res.status(404).json({ ok: false, message: "Produit introuvable." });
-    }
-
-    // ✅ Préserver l'ID existant
-    const old = guild.products[index];
-    guild.products[index] = {
-      ...old,
-      name: name ?? old.name,
-      description: description ?? old.description,
-      price: price ?? old.price,
-      image: image ?? old.image,
-      updatedAt: Date.now()
-    };
-
-    await guild.save();
-    res.json({ ok: true });
-  } catch (err) {
-    console.error("Erreur modification produit :", err);
-    res.status(500).json({ ok: false, message: "Erreur serveur lors de la modification." });
-  }
-});
 
 // ----------- API VOUCH -----------
 app.post("/api/vouch", ensureLogged, async (req, res) => {
@@ -270,6 +237,7 @@ app.post("/api/vouch", ensureLogged, async (req, res) => {
     guild.vouches.push(vouch);
     await resequenceGuild(guild);
 
+    // Envoi Discord webhook
     const webhook = process.env.DISCORD_WEBHOOK_URL;
     if (webhook) {
       const star = (x) => "⭐".repeat(x) + "✩".repeat(5 - x);
@@ -297,6 +265,7 @@ app.post("/api/vouch", ensureLogged, async (req, res) => {
       } catch {}
     }
 
+    // MAJ du leaderboard sur le bot
     try {
       await fetch("http://localhost:3001/update-leaderboard", {
         method: "POST",
