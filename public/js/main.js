@@ -154,3 +154,32 @@ window.showToast = function (message, type = "info", duration = 4000) {
     setTimeout(() => toast.remove(), 500);
   }, duration);
 };
+// ===============================
+// ⚠️ CONFIRMATION MODALE CUSTOM
+// ===============================
+window.showConfirm = function (message) {
+  return new Promise((resolve) => {
+    const modal = document.createElement("div");
+    modal.className = "confirm-overlay";
+    modal.innerHTML = `
+      <div class="confirm-box">
+        <p>${message}</p>
+        <div class="confirm-buttons">
+          <button class="btn btn-primary" id="confirm-ok">OK</button>
+          <button class="btn btn-ghost" id="confirm-cancel">Annuler</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+
+    // Fermeture / résolution
+    modal.querySelector("#confirm-ok").onclick = () => {
+      modal.remove();
+      resolve(true);
+    };
+    modal.querySelector("#confirm-cancel").onclick = () => {
+      modal.remove();
+      resolve(false);
+    };
+  });
+};

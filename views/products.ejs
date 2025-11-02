@@ -110,7 +110,8 @@ async function submitProduct(e) {
 }
 
 async function deleteProduct(id) {
-  if (!confirm("Supprimer ce produit ?")) return;
+  const confirmed = await showConfirm("Supprimer ce produit ?");
+  if (!confirmed) return;
   const res = await fetch(`/api/product/${id}`, { method: "DELETE" });
   const json = await res.json();
   if (json.ok) location.reload();
