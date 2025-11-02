@@ -166,38 +166,79 @@ app.get("/config", ensureLogged, ensureAdmin, async (req, res) => {
 // ----------- PAGE PRODUITS -----------
 app.get("/products", ensureLogged, async (req, res) => {
   const gid = process.env.GUILD_ID;
-  const guild = (await Guild.findOne({ guildId: gid }).lean()) || { products: [] };
+  const guild =
+    (await Guild.findOne({ guildId: gid }).lean()) || { products: [] };
+
   res.render("products", {
     user: req.user,
     products: guild.products || [],
     title: "Produits",
-    path: "/products"
+    path: "/products",
   });
 });
 
 // ----------- API PRODUITS -----------
 app.post("/api/product", ensureLogged, ensureAdmin, async (req, res) => {
-  const { name, price, description, image } = req.body;
-  const gid = process.env.GUILD_ID;
-  const guild = (await Guild.findOne({ guildId: gid })) || await Guild.create({ guildId: gid });
+  try {
+    const { name, price, description, image } = req.body;
+    if (!name || !name.trim()) {
+      return res.status(400).json({ ok: false, message: "Nom du produit requis." });
+    }
 
-  guild.products = guild.products || [];
-  const id = guild.products.length ? guild.products[guild.products.length - 1].id + 1 : 1;
-  guild.products.push({ id, name, price, description, image, createdAt: Date.now() });
-  await guild.save();
+    const gid = process.env.GUILD_ID;
+    const guild =
+      (await Guild.findOne({ guildId: gid })) ||
+      (await Guild.create({ guildId: gid }));
 
-  res.json({ ok: true });
+    guild.products = guild.products || [];
+
+    // ✅ filtrer les produits valides et calculer un ID propre
+    const validProducts = guild.products.filter(p => typeof p.id === "number" && !isNaN(p.id));
+    const lastId = validProducts.length ? validProducts[validProducts.length - 1].id : 0;
+    const newId = lastId + 1;
+
+    guild.products.push({
+      id: newId,
+      name: name.trim(),
+      price: price ? parseFloat(price) : null,
+      description: description?.trim() || "",
+      image: image?.trim() || "",
+      createdAt: Date.now(),
+    });
+
+    await guild.save();
+    res.json({ ok: true });
+  } catch (err) {
+    console.error("❌ Erreur ajout produit :", err);
+    res.status(500).json({ ok: false, message: err.message || "Erreur serveur" });
+  }
 });
 
 app.delete("/api/product/:id", ensureLogged, ensureAdmin, async (req, res) => {
-  const id = parseInt(req.params.id);
-  const gid = process.env.GUILD_ID;
-  const guild = await Guild.findOne({ guildId: gid });
-  guild.products = (guild.products || []).filter(p => p.id !== id);
-  await guild.save();
-  res.json({ ok: true });
-});
+  try {
+    const id = parseInt(req.params.id, 10);
+    if (isNaN(id)) {
+      return res.status(400).json({ ok: false, message: "ID invalide" });
+    }
 
+    const gid = process.env.GUILD_ID;
+    const guild = await Guild.findOne({ guildId: gid });
+    if (!guild) return res.status(404).json({ ok: false, message: "Guild introuvable" });
+
+    const before = guild.products?.length || 0;
+    guild.products = (guild.products || []).filter(p => p.id !== id);
+
+    if (guild.products.length === before) {
+      return res.status(404).json({ ok: false, message: "Produit introuvable" });
+    }
+
+    await guild.save();
+    res.json({ ok: true });
+  } catch (err) {
+    console.error("❌ Erreur suppression produit :", err);
+    res.status(500).json({ ok: false, message: err.message || "Erreur serveur" });
+  }
+});
 
 // ----------- API VOUCH -----------
 app.post("/api/vouch", ensureLogged, async (req, res) => {
