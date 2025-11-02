@@ -1,37 +1,62 @@
-<section>
-  <h1 class="title">Leaderboard</h1>
+<section class="leaderboard">
+  <h1 class="title">🏆 Leaderboard</h1>
 
   <% if (!rows.length) { %>
-    <div class="card"><p>Aucun vendeur n’a encore reçu de vouch.</p></div>
+    <div class="card">
+      <p>Aucun vendeur n’a encore reçu de vouch.</p>
+    </div>
   <% } else { %>
-    <% const top = rows.slice(0,3); const others = rows.slice(3); %>
+    <% const top = rows.slice(0, 3); const others = rows.slice(3); %>
+
+    <!-- PODIUM -->
     <div class="podium">
+      <!-- 2ème place -->
       <div class="pod silver">
         <div class="rank">🥈 2</div>
-        <div class="circle"><%= (top[1]?.vendor || '?')[0] %></div>
-        <div><strong><%= top[1]?.vendor || '' %></strong></div>
-        <div class="muted"><%= top[1]?.count || 0 %> vouches</div>
+        <div class="profile">
+          <img src="https://api.dicebear.com/8.x/avataaars/svg?seed=<%= top[1]?.vendor || 'User' %>" alt="avatar">
+          <div class="info">
+            <strong><%= top[1]?.vendor || '' %></strong>
+            <div class="muted"><%= top[1]?.count || 0 %> vouches</div>
+          </div>
+        </div>
       </div>
-      <div class="pod gold" style="transform:translateY(-8px)">
+
+      <!-- 1ère place -->
+      <div class="pod gold" style="transform: translateY(-10px)">
         <div class="rank">🥇 1</div>
-        <div class="circle"><%= (top[0]?.vendor || '?')[0] %></div>
-        <div><strong><%= top[0]?.vendor || '' %></strong></div>
-        <div class="muted"><%= top[0]?.count || 0 %> vouches</div>
+        <div class="profile">
+          <img src="https://api.dicebear.com/8.x/avataaars/svg?seed=<%= top[0]?.vendor || 'User' %>" alt="avatar">
+          <div class="info">
+            <strong><%= top[0]?.vendor || '' %></strong>
+            <div class="muted"><%= top[0]?.count || 0 %> vouches</div>
+          </div>
+        </div>
       </div>
+
+      <!-- 3ème place -->
       <div class="pod bronze">
         <div class="rank">🥉 3</div>
-        <div class="circle"><%= (top[2]?.vendor || '?')[0] %></div>
-        <div><strong><%= top[2]?.vendor || '' %></strong></div>
-        <div class="muted"><%= top[2]?.count || 0 %> vouches</div>
+        <div class="profile">
+          <img src="https://api.dicebear.com/8.x/avataaars/svg?seed=<%= top[2]?.vendor || 'User' %>" alt="avatar">
+          <div class="info">
+            <strong><%= top[2]?.vendor || '' %></strong>
+            <div class="muted"><%= top[2]?.count || 0 %> vouches</div>
+          </div>
+        </div>
       </div>
     </div>
 
+    <!-- AUTRES CLASSEMENTS -->
     <% if (others.length) { %>
       <div class="lb">
         <% others.forEach(r => { %>
           <div class="lb-row">
-            <div class="lb-rank"><%= r.rank %></div>
-            <div class="lb-vendor"><%= r.vendor %></div>
+            <div class="lb-rank">#<%= r.rank %></div>
+            <div class="lb-vendor">
+              <img src="https://api.dicebear.com/8.x/avataaars/svg?seed=<%= r.vendor %>" alt="avatar">
+              <span><%= r.vendor %></span>
+            </div>
             <div class="lb-count"><%= r.count %> vouches</div>
           </div>
         <% }) %>

@@ -1,7 +1,7 @@
 <section class="page">
   <div class="container">
     <div class="header-row">
-      <h1>Produits disponibles</h1>
+      <h1>🛍️ Produits disponibles</h1>
       <% if (user?.isAdmin) { %>
         <button class="btn btn-primary" onclick="openModal()">+ Ajouter un produit</button>
       <% } %>
@@ -9,19 +9,42 @@
 
     <div id="products" class="grid">
       <% if (!products.length) { %>
-        <p class="muted">Aucun produit ajouté pour le moment.</p>
+        <div class="card">
+          <p class="muted">Aucun produit n’a encore été ajouté.</p>
+        </div>
       <% } else { %>
         <% products.forEach(p => { %>
-          <div class="card">
-            <h2><%= p.name %></h2>
-            <% if (p.description) { %>
-              <p class="muted"><%= p.description %></p>
-            <% } %>
-            <% if (p.price && p.price > 0) { %>
-              <p class="price"><%= p.price %> €</p>
-            <% } %>
+          <div class="card product-card">
+            <!-- Image du produit (générée si absente) -->
+            <div class="product-image">
+              <img src="<%= p.image || `https://api.dicebear.com/8.x/shapes/svg?seed=${encodeURIComponent(p.name)}` %>" alt="<%= p.name %>">
+            </div>
+
+            <!-- Nom et description -->
+            <div class="product-body">
+              <h2 class="product-name"><%= p.name %></h2>
+
+              <% if (p.description) { %>
+                <p class="muted"><%= p.description %></p>
+              <% } else { %>
+                <p class="muted">Aucune description fournie.</p>
+              <% } %>
+
+              <!-- Prix -->
+              <% if (p.price && p.price > 0) { %>
+                <div class="price-tag">
+                  <span><%= p.price.toFixed(2) %> €</span>
+                </div>
+              <% } else { %>
+                <div class="price-tag muted">Prix sur demande</div>
+              <% } %>
+            </div>
+
+            <!-- Bouton admin -->
             <% if (user?.isAdmin) { %>
-              <button class="btn btn-outline" data-id="<%= p.id %>" onclick="deleteProduct(this.dataset.id)">Supprimer</button>
+              <div class="product-actions">
+                <button class="btn btn-outline small" data-id="<%= p.id %>" onclick="deleteProduct(this.dataset.id)">🗑 Supprimer</button>
+              </div>
             <% } %>
           </div>
         <% }) %>
@@ -43,6 +66,9 @@
       </div>
       <div class="form-row full">
         <textarea name="description" placeholder="Description du produit" rows="3" class="input"></textarea>
+      </div>
+      <div class="form-row full">
+        <input type="text" name="image" placeholder="URL de l’image (optionnel)" class="input">
       </div>
 
       <div style="margin-top:14px;text-align:right;">
