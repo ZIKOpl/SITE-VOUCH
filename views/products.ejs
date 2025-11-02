@@ -1,160 +1,165 @@
-<section class="page">
-  <div class="container">
-    <div class="header-row">
-      <h1>🛍️ Produits disponibles</h1>
-      <% if (user?.isAdmin) { %>
-        <button class="btn btn-primary" onclick="openModal()">+ Ajouter un produit</button>
-      <% } %>
-    </div>
+<section>
+  <h1 class="title">Tous les vouches</h1>
 
-    <div id="products" class="grid">
-      <!-- ✅ Stockage sécurisé des produits -->
-      <script id="products-data" type="application/json">
-        <%- JSON.stringify(products || []).replace(/</g, '\\u003c') %>
-      </script>
+  <div class="searchbar">
+    <input id="search" class="input" placeholder="Rechercher (vendeur, item, commentaire, auteur...)" autocomplete="off">
+    <button id="clearSearch" class="btn btn-outline">Effacer</button>
+    <% if (user) { %>
+      <button id="openCreate" class="btn btn-primary">➕ Créer un vouch</button>
+    <% } %>
+  </div>
 
-      <script>
-        window.PRODUCTS = JSON.parse(document.getElementById('products-data').textContent);
-      </script>
+  <% if (!vouches.length) { %>
+    <div class="card"><p>Aucun vouch pour le moment.</p></div>
+  <% } %>
 
-      <% if (!products.length) { %>
-        <div class="card"><p class="muted">Aucun produit n’a encore été ajouté.</p></div>
-      <% } else { %>
-        <% products.forEach(p => { %>
-          <div class="card product-card">
-            <div class="product-image">
-              <img src="<%= p.image || `/assets/img/default.png` %>" alt="<%= p.name %>">
-            </div>
+  <div id="vouchGrid" class="grid">
+    <% vouches.forEach(v => { %>
+      <article
+        class="card vouch-card"
+        tabindex="0"
+        data-id="<%- v.id %>"
+      >
+        <div class="card head">
+          <div class="badge">Note : <strong><%= "⭐".repeat(v.note) + "✩".repeat(5 - v.note) %></strong> (<%= v.note %>/5)</div>
+          <div class="muted"><%= v.createdAtFmt %></div>
+        </div>
 
-            <div class="product-body">
-              <h2 class="product-name"><%= p.name %></h2>
-              <p class="muted product-desc"><%= p.description || "Aucune description fournie." %></p>
+        <div class="card-body">
+          <p><span class="muted">Vendeur :</span> <strong><%= v.vendorLabel || (v.vendorId ? '@'+v.vendorId : 'Inconnu') %></strong></p>
+          <p><span class="muted">Item :</span> <strong>x<%= v.qty %> <%= v.item %></strong> — <%= v.prix %> via <%= v.payment %></p>
+          <p><span class="muted">Par :</span> <%= v.anonymous ? "Anonyme" : v.authorTag %></p>
+          <p><span class="muted">Commentaire :</span> <%= (v.comment && v.comment.trim().length) ? v.comment : "—" %></p>
+          <% if (v.source === "site") { %>
+            <p class="muted">Origine : <strong>SITE</strong></p>
+          <% } %>
+        </div>
 
-              <% if (p.price && p.price > 0) { %>
-                <div class="price-tag"><%= p.price.toFixed(2) %> €</div>
-              <% } else { %>
-                <div class="price-tag muted">Prix sur demande</div>
-              <% } %>
-            </div>
-
-            <% if (user?.isAdmin) { %>
-              <div class="product-actions">
-                <button class="btn btn-outline small" onclick="editProductById('<%= p.id %>')">📝 Modifier</button>
-                <button class="btn btn-outline small" data-id="<%= p.id %>" onclick="deleteProduct(this.dataset.id)">🗑 Supprimer</button>
-              </div>
-            <% } %>
+        <% if (user && user.isAdmin) { %>
+          <div style="margin-top:10px;text-align:right">
+            <button class="btn btn-outline btn-delete" data-id="<%- v.id %>">🗑 Supprimer</button>
           </div>
-        <% }) %>
-      <% } %>
-    </div>
+        <% } %>
+      </article>
+    <% }) %>
   </div>
 </section>
 
-<!-- Modal d’ajout / modification -->
-<div class="modal-overlay" id="modal">
-  <div class="modal">
-    <button class="modal-close" onclick="closeModal()">×</button>
-    <h3 id="modalTitle">Ajouter un produit</h3>
+<!-- Modale de création -->
+<script type="text/template" id="tpl-create-vouch">
+  <h3>Créer un vouch</h3>
+  <form id="createVouchForm">
+    <div class="form-row">
+      <div class="full">
+        <label>Vendeur</label>
+        <select name="vendeur" required>
+          <% (vendors||[]).forEach(v => { %>
+            <option value="<%- v.id || v.label %>"><%- v.label || ('@'+v.id) %></option>
+          <% }) %>
+        </select>
+      </div>
+    </div>
 
-    <form id="productForm" onsubmit="return submitProduct(event)">
-      <input type="hidden" name="id">
-      <div class="form-row">
-        <input type="text" name="name" placeholder="Nom du produit" class="input" required>
-        <input type="number" step="0.01" name="price" placeholder="Prix (optionnel)" class="input">
+    <div class="form-row">
+      <div>
+        <label>Quantité</label>
+        <input class="input" name="quantite" type="number" min="1" value="1" required>
       </div>
-      <div class="form-row full">
-        <textarea name="description" placeholder="Description du produit" rows="3" class="input"></textarea>
+      <div>
+        <label>Item</label>
+        <select name="item" required>
+          <% (items||[]).forEach(it => { %>
+            <option value="<%- it %>"><%- it %></option>
+          <% }) %>
+        </select>
       </div>
-      <div class="form-row full">
-        <input type="text" name="image" placeholder="URL de l’image (optionnel)" class="input">
-      </div>
+    </div>
 
-      <div style="margin-top:14px;text-align:right;">
-        <button type="button" class="btn btn-ghost" onclick="closeModal()">Annuler</button>
-        <button type="submit" class="btn btn-primary">Enregistrer</button>
+    <div class="form-row">
+      <div>
+        <label>Prix (ex: 2.5€)</label>
+        <input class="input" name="prix" type="text" placeholder="2.5€" required>
       </div>
-    </form>
-  </div>
-</div>
+      <div>
+        <label>Paiement</label>
+        <select name="moyen_de_paiement" required>
+          <% (payments||["PayPal","Crypto","LTC"]).forEach(p => { %>
+            <option value="<%- p %>"><%- p %></option>
+          <% }) %>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div>
+        <label>Note /5</label>
+        <select name="note" required>
+          <% for (let i = 5; i >= 0; i--) { %>
+            <option value="<%= i %>"><%= i %></option>
+          <% } %>
+        </select>
+      </div>
+      <div>
+        <label>Anonyme ?</label>
+        <select name="anonyme">
+          <option value="false">Non</option><option value="true">Oui</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-row full">
+      <label>Commentaire (optionnel)</label>
+      <textarea class="input" name="commentaire" rows="3" placeholder="Ton avis..."></textarea>
+    </div>
+
+    <div class="form-row full" style="text-align:right">
+      <button type="button" class="btn btn-outline" id="cancelCreate">Annuler</button>
+      <button type="submit" class="btn btn-primary">Envoyer le vouch</button>
+    </div>
+  </form>
+</script>
 
 <script>
-/* --- Ouvrir / fermer la modale --- */
-function openModal(edit = false) {
-  document.getElementById("modal").classList.add("show");
-  document.getElementById("modalTitle").textContent = edit ? "Modifier le produit" : "Ajouter un produit";
-}
-function closeModal() {
-  document.getElementById("modal").classList.remove("show");
-  document.getElementById("productForm").reset();
-  document.querySelector('[name="id"]').value = '';
-}
+document.addEventListener("DOMContentLoaded", () => {
+  // 🗑 Suppression d’un vouch
+  document.querySelectorAll('.btn-delete').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const id = btn.getAttribute('data-id');
+      const confirmed = await showConfirm("🗑 Supprimer ce vouch ?");
+      if (!confirmed) return;
 
-/* --- Fonction appelée quand on clique sur "Modifier" --- */
-function editProductById(id) {
-  const products = window.PRODUCTS || [];
-  const p = products.find(prod => String(prod.id) === String(id));
+      try {
+        const res = await fetch(`/api/vouch/${id}`, { method: "DELETE" });
+        const json = await res.json();
 
-  if (!p) {
-    showToast("❌ Produit introuvable", "error");
-    return;
-  }
-
-  openModal(true);
-  const form = document.getElementById("productForm");
-  form.id.value = p.id || '';
-  form.name.value = p.name || '';
-  form.price.value = p.price || '';
-  form.description.value = p.description || '';
-  form.image.value = p.image || '';
-}
-
-/* --- Gestion du formulaire d’ajout / édition --- */
-async function submitProduct(e) {
-  e.preventDefault();
-  const form = e.target;
-  const data = Object.fromEntries(new FormData(form));
-  data.price = data.price ? parseFloat(data.price) : null;
-
-  const url = data.id ? `/api/product/${data.id}` : "/api/product";
-  const method = data.id ? "PUT" : "POST";
-
-  try {
-    const res = await fetch(url, {
-      method,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data)
+        if (json.ok) {
+          showToast("✅ Vouch supprimé avec succès", "success");
+          setTimeout(() => location.reload(), 1200);
+        } else {
+          showToast("❌ Erreur : " + json.message, "error");
+        }
+      } catch (err) {
+        showToast("❌ Erreur de communication avec le serveur", "error");
+      }
     });
+  });
 
-    const json = await res.json();
+  // 🔍 Recherche rapide
+  const search = document.getElementById('search');
+  const clear = document.getElementById('clearSearch');
+  const cards = [...document.querySelectorAll('.vouch-card')];
 
-    if (json.ok) {
-      showToast("✅ Produit enregistré avec succès", "success");
-      setTimeout(() => location.reload(), 1000);
-    } else {
-      showToast("❌ " + (json.message || "Erreur lors de l'enregistrement"), "error");
-    }
-  } catch (err) {
-    showToast("❌ Erreur de communication avec le serveur", "error");
-  }
-}
+  search?.addEventListener('input', () => {
+    const val = search.value.toLowerCase();
+    cards.forEach(c => {
+      const text = c.textContent.toLowerCase();
+      c.style.display = text.includes(val) ? '' : 'none';
+    });
+  });
 
-/* --- Suppression d’un produit --- */
-async function deleteProduct(id) {
-  const confirmed = await showConfirm("🗑 Supprimer ce produit ?");
-  if (!confirmed) return;
-
-  try {
-    const res = await fetch(`/api/product/${id}`, { method: "DELETE" });
-    const json = await res.json();
-
-    if (json.ok) {
-      showToast("✅ Produit supprimé avec succès", "success");
-      setTimeout(() => location.reload(), 1000);
-    } else {
-      showToast("❌ Erreur suppression produit", "error");
-    }
-  } catch (err) {
-    showToast("❌ Erreur réseau ou serveur", "error");
-  }
-}
+  clear?.addEventListener('click', () => {
+    search.value = '';
+    cards.forEach(c => (c.style.display = ''));
+  });
+});
 </script>
