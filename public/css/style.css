@@ -1,0 +1,130 @@
+:root{
+  --bg:#0b0d12; --panel:#11151d; --panel2:#151b24;
+  --text:#e6edf3; --muted:#9fb0c3; --primary:#ff4d4d; --border:#222733;
+  --accent:#7c5cfc;
+}
+
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;color:var(--text);
+  font-family:"Poppins",system-ui,-apple-system,"Segoe UI",Roboto,Arial;
+  background: radial-gradient(1200px 600px at 80% -10%, rgba(124,92,252,.15), transparent 60%),
+              radial-gradient(900px 500px at -10% 110%, rgba(255,77,77,.12), transparent 60%),
+              linear-gradient(180deg, #0b0d12, #0a0c11);
+  background-attachment: fixed;
+  animation: bgShift 16s ease-in-out infinite alternate;
+}
+@keyframes bgShift{
+  0%{background-position:0 0, 0 0, 0 0}
+  100%{background-position:30px -20px, -40px 20px, 0 0}
+}
+
+.container{width:100%;max-width:1100px;margin:0 auto;padding:0 18px}
+
+/* Header */
+.app-header{position:sticky;top:0;z-index:50;background:rgba(10,12,17,.75);
+  border-bottom:1px solid var(--border);backdrop-filter:blur(8px);animation:slideDown .4s ease}
+.header-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0}
+.brand a{font-weight:700;letter-spacing:.4px;text-decoration:none;color:var(--text)}
+.nav a{color:var(--muted);text-decoration:none;margin:0 10px;position:relative}
+.nav a.active,.nav a:hover{color:#fff}
+.user-tag{margin-right:10px;color:var(--muted)}
+.page{padding:26px 0 40px}
+.app-footer{border-top:1px solid var(--border);color:var(--muted);padding:18px 0;text-align:center;opacity:.8}
+
+/* Buttons */
+.btn{display:inline-block;padding:9px 14px;border-radius:12px;text-decoration:none;cursor:pointer;
+  transition:transform .15s,box-shadow .2s,background .15s,color .15s,border-color .15s;border:1px solid transparent}
+.btn:active{transform:translateY(1px)}
+.btn-primary{background:var(--primary);color:#fff;box-shadow:0 10px 26px rgba(255,77,77,.28)}
+.btn-primary:hover{filter:brightness(1.06);box-shadow:0 14px 32px rgba(255,77,77,.36)}
+.btn-outline{border:1px solid var(--border);color:var(--text);background:transparent}
+.btn-outline:hover{background:rgba(255,255,255,.06)}
+.btn-ghost{background:transparent;color:var(--muted)}
+.btn.big{padding:12px 18px;font-size:16px}
+
+/* Inputs */
+.input, select, textarea{background:var(--panel2);border:1px solid var(--border);color:var(--text);
+  border-radius:12px;padding:11px 12px;outline:none;transition:border-color .15s,box-shadow .15s}
+.input:focus, select:focus, textarea:focus{border-color:rgba(255,77,77,.5);box-shadow:0 0 0 2px rgba(255,77,77,.25)}
+
+/* Search bar */
+.searchbar{display:flex;gap:10px;margin-bottom:14px}
+.input{flex:1}
+
+/* Cards */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px}
+.card{background:var(--panel2);border:1px solid var(--border);border-radius:16px;padding:16px;
+  transition:transform .18s,box-shadow .2s,border-color .15s;animation:fadeIn .35s ease}
+.card:hover{transform:translateY(-2px) scale(1.01);box-shadow:0 16px 36px rgba(0,0,0,.35),
+  0 0 0 1px rgba(255,77,77,.15) inset;border-color:rgba(255,77,77,.35)}
+.card.head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;font-weight:600}
+.card-body p{margin:6px 0}
+.badge{color:#ffd166}
+.muted{color:var(--muted)}
+
+/* Leaderboard - podium */
+.podium{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:16px;align-items:end}
+.podium .pod{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:16px;text-align:center;
+  box-shadow:0 12px 26px rgba(0,0,0,.25);animation:fadeInUp .35s ease}
+.pod .rank{font-size:28px;margin-bottom:6px}
+.pod.gold{border-color:rgba(255,209,102,.4)}
+.pod.silver{border-color:rgba(203,213,225,.4)}
+.pod.bronze{border-color:rgba(245,158,11,.4)}
+.pod .circle{width:64px;height:64px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;
+  background:linear-gradient(145deg, rgba(255,255,255,.05), rgba(0,0,0,.15));margin-bottom:8px;font-weight:700}
+
+/* Modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;
+  padding:20px;opacity:0;pointer-events:none;transition:opacity .18s}
+.modal-overlay.show{opacity:1;pointer-events:auto}
+.modal{width:min(760px,94vw);background:#0f141a;border:1px solid var(--border);border-radius:18px;padding:20px;
+  position:relative;box-shadow:0 24px 64px rgba(0,0,0,.55);transform:scale(.96);transition:transform .18s}
+.modal.show{transform:scale(1)}
+.modal-close{position:absolute;top:10px;right:10px;background:transparent;border:none;color:#aaa;font-size:20px;cursor:pointer;transition:color .15s,transform .1s}
+.modal-close:hover{color:#fff;transform:scale(1.08)}
+.modal h3{margin:0 0 8px}
+.kv{display:grid;grid-template-columns:180px 1fr;gap:6px;margin:8px 0}
+.k{color:var(--muted)}
+
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.form-row + .form-row{margin-top:10px}
+.full{grid-column:1/-1}
+
+/* Config page */
+.section-title{display:flex;align-items:center;justify-content:space-between;margin:18px 0 10px}
+.table{border:1px solid var(--border);border-radius:14px;overflow:hidden}
+.table .row{display:grid;grid-template-columns:1fr 160px;gap:10px;align-items:center;border-bottom:1px solid var(--border);padding:10px 14px}
+.table .row:last-child{border-bottom:none}
+.table .row .actions{justify-self:end}
+.tag{display:inline-block;background:rgba(255,255,255,.06);border:1px solid var(--border);padding:4px 8px;border-radius:10px;margin:4px 6px 0 0}
+
+@keyframes fadeIn{from{opacity:0;transform:translateY(2px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+@keyframes slideDown{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+
+@media (max-width:720px){
+  .nav{display:none}
+  .form-row{grid-template-columns:1fr}
+  .podium{grid-template-columns:1fr}
+}
+/* Fix pour la modale qui passe derrière */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+  z-index: 9999; /* 🧩 C’est ça qui la remet au-dessus */
+}
+
+@keyframes modalZoom {
+  from { transform: scale(0.95); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}

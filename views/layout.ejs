@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title><%= title || "Vouch" %> | HOME VOUCH</title>
+  <link rel="stylesheet" href="/css/style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <header class="app-header">
+    <div class="container header-row">
+      <div class="brand"><a href="/">HOME VOUCH</a></div>
+      <nav class="nav">
+        <a href="/vouches" class="<%= path==='/vouches' ? 'active' : '' %>">Vouches</a>
+        <a href="/leaderboard" class="<%= path==='/leaderboard' ? 'active' : '' %>">Leaderboard</a>
+        <a href="/products" class="<%= path === '/products' ? 'active' : '' %>">Produits</a>
+        <% if (user?.isAdmin) { %>
+          <a href="/config" class="<%= path==='/config' ? 'active' : '' %>">Config</a>
+        <% } %>
+      </nav>
+      <div class="auth">
+        <% if (user) { %>
+          <span class="user-tag"><%= user.username %> <%= user.isAdmin ? '· Admin' : '' %></span>
+          <a class="btn btn-outline" href="/logout">Se déconnecter</a>
+        <% } else { %>
+          <a class="btn btn-primary" href="/auth/discord">Se connecter</a>
+        <% } %>
+      </div>
+    </div>
+  </header>
+
+  <main class="container page">
+    <%- body %>
+  </main>
+
+  <footer class="app-footer">
+    <div class="container">HOME VOUCH — <span class="muted">Dark UI</span></div>
+  </footer>
+
+  <div id="modal-overlay" class="modal-overlay" hidden>
+    <div id="modal-panel" class="modal">
+      <button type="button" class="modal-close" aria-label="Fermer">✖</button>
+      <div id="modal-content"></div>
+    </div>
+  </div>
+
+  <script src="/js/main.js"></script>
+</body>
+</html>

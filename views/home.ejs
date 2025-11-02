@@ -1,0 +1,9 @@
+<section class="home">
+  <h1>Bienvenue sur <span class="accent">HOME VOUCH</span></h1>
+  <p class="subtitle">Consulte les vouches, découvre le classement des meilleurs vendeurs et crée des vouches directement depuis le site (envoi d'embed Discord).<br/>Le panneau <strong>Config</strong> est accessible aux administrateurs du serveur.</p>
+  <% if (!user) { %>
+    <a href="/auth/discord" class="btn btn-primary big">Se connecter avec Discord</a>
+  <% } else { %>
+    <a href="/vouches" class="btn btn-primary big">Voir & créer des vouches</a>
+  <% } %>
+</section>

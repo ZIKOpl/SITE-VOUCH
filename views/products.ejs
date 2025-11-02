@@ -1,0 +1,88 @@
+<section class="page">
+  <div class="container">
+    <div class="header-row">
+      <h1>Produits disponibles</h1>
+      <% if (user?.isAdmin) { %>
+        <button class="btn btn-primary" onclick="openModal()">+ Ajouter un produit</button>
+      <% } %>
+    </div>
+
+    <div id="products" class="grid">
+      <% if (!products.length) { %>
+        <p class="muted">Aucun produit ajouté pour le moment.</p>
+      <% } else { %>
+        <% products.forEach(p => { %>
+          <div class="card">
+            <h2><%= p.name %></h2>
+            <% if (p.description) { %>
+              <p class="muted"><%= p.description %></p>
+            <% } %>
+            <% if (p.price && p.price > 0) { %>
+              <p class="price"><%= p.price %> €</p>
+            <% } %>
+            <% if (user?.isAdmin) { %>
+              <button class="btn btn-outline" data-id="<%= p.id %>" onclick="deleteProduct(this.dataset.id)">Supprimer</button>
+            <% } %>
+          </div>
+        <% }) %>
+      <% } %>
+    </div>
+  </div>
+</section>
+
+<!-- Modal d’ajout de produit -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">×</button>
+    <h3>Ajouter un produit</h3>
+
+    <form id="addForm" onsubmit="return submitProduct(event)">
+      <div class="form-row">
+        <input type="text" name="name" placeholder="Nom du produit" class="input" required>
+        <input type="number" step="0.01" name="price" placeholder="Prix (optionnel)" class="input">
+      </div>
+      <div class="form-row full">
+        <textarea name="description" placeholder="Description du produit" rows="3" class="input"></textarea>
+      </div>
+
+      <div style="margin-top:14px;text-align:right;">
+        <button type="button" class="btn btn-ghost" onclick="closeModal()">Annuler</button>
+        <button type="submit" class="btn btn-primary">Ajouter</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function openModal() {
+  document.getElementById("modal").classList.add("show");
+}
+function closeModal() {
+  document.getElementById("modal").classList.remove("show");
+}
+
+async function submitProduct(e) {
+  e.preventDefault();
+  const form = e.target;
+  const data = Object.fromEntries(new FormData(form));
+  if (!data.name.trim()) return alert("Nom du produit requis !");
+  data.price = data.price ? parseFloat(data.price) : null;
+
+  const res = await fetch("/api/product", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data)
+  });
+  const json = await res.json();
+  if (json.ok) location.reload();
+  else alert("Erreur : " + json.message);
+}
+
+async function deleteProduct(id) {
+  if (!confirm("Supprimer ce produit ?")) return;
+  const res = await fetch(`/api/product/${id}`, { method: "DELETE" });
+  const json = await res.json();
+  if (json.ok) location.reload();
+  else alert("Erreur suppression produit");
+}
+</script>

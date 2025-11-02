@@ -1,0 +1,121 @@
+<section>
+  <h1 class="title">Tous les vouches</h1>
+
+  <div class="searchbar">
+    <input id="search" class="input" placeholder="Rechercher (vendeur, item, commentaire, auteur...)" autocomplete="off">
+    <button id="clearSearch" class="btn btn-outline">Effacer</button>
+    <% if (user) { %>
+      <button id="openCreate" class="btn btn-primary">➕ Créer un vouch</button>
+    <% } %>
+  </div>
+
+  <% if (!vouches.length) { %>
+    <div class="card"><p>Aucun vouch pour le moment.</p></div>
+  <% } %>
+
+  <div id="vouchGrid" class="grid">
+    <% vouches.forEach(v => { %>
+      <article
+        class="card vouch-card"
+        tabindex="0"
+        data-vendor="<%- v.vendorLabel || (v.vendorId ? '@'+v.vendorId : 'Inconnu') %>"
+        data-note="<%- v.note %>"
+        data-item="x<%- v.qty %> <%- v.item %>"
+        data-price="<%- v.prix %>"
+        data-payment="<%- v.payment %>"
+        data-author="<%- v.anonymous ? 'Anonyme' : v.authorTag %>"
+        data-comment="<%- (v.comment || '').replace(/"/g,'&quot;') %>"
+        data-date="<%- v.createdAtFmt %>"
+        data-search="<%- (v.vendorLabel || (v.vendorId ? '@'+v.vendorId : 'Inconnu')) + ' ' + v.item + ' ' + v.prix + ' ' + v.payment + ' ' + (v.anonymous ? 'Anonyme' : v.authorTag) + ' ' + (v.comment || '') %>"
+      >
+        <div class="card head">
+          <div class="badge">Note : <strong><%= "⭐".repeat(v.note) + "✩".repeat(5 - v.note) %></strong> (<%= v.note %>/5)</div>
+          <div class="muted"><%= v.createdAtFmt %></div>
+        </div>
+        <div class="card-body">
+          <p><span class="muted">Vendeur :</span> <strong><%= v.vendorLabel || (v.vendorId ? '@'+v.vendorId : 'Inconnu') %></strong></p>
+          <p><span class="muted">Item :</span> <strong>x<%= v.qty %> <%= v.item %></strong> — <%= v.prix %> via <%= v.payment %></p>
+          <p><span class="muted">Par :</span> <%= v.anonymous ? "Anonyme" : v.authorTag %></p>
+          <p><span class="muted">Commentaire :</span> <%= (v.comment && v.comment.trim().length) ? v.comment : "—" %></p>
+          <% if (v.source === "site") { %><p class="muted">Origine : <strong>SITE</strong></p><% } %>
+        </div>
+        <% if (user && user.isAdmin) { %>
+          <div style="margin-top:10px;text-align:right">
+            <button class="btn btn-outline btn-delete" data-del-id="<%- v.id %>">🗑 Supprimer</button>
+          </div>
+        <% } %>
+      </article>
+    <% }) %>
+  </div>
+</section>
+
+<script type="text/template" id="tpl-create-vouch">
+  <h3>Créer un vouch</h3>
+  <form id="createVouchForm">
+    <div class="form-row">
+      <div class="full">
+        <label>Vendeur</label>
+        <select name="vendeur" required>
+          <% (vendors||[]).forEach(v => { %>
+            <option value="<%- v.id || v.label %>"><%- v.label || ('@'+v.id) %></option>
+          <% }) %>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div>
+        <label>Quantité</label>
+        <input class="input" name="quantite" type="number" min="1" value="1" required>
+      </div>
+      <div>
+        <label>Item</label>
+        <select name="item" required>
+          <% (items||[]).forEach(it => { %>
+            <option value="<%- it %>"><%- it %></option>
+          <% }) %>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div>
+        <label>Prix (ex: 2.5€)</label>
+        <input class="input" name="prix" type="text" placeholder="2.5€" required>
+      </div>
+      <div>
+        <label>Paiement</label>
+        <select name="moyen_de_paiement" required>
+          <% (payments||["PayPal","Crypto","LTC"]).forEach(p => { %>
+            <option value="<%- p %>"><%- p %></option>
+          <% }) %>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div>
+        <label>Note /5</label>
+        <select name="note" required>
+          <option value="5">5</option><option value="4">4</option><option value="3">3</option>
+          <option value="2">2</option><option value="1">1</option><option value="0">0</option>
+        </select>
+      </div>
+      <div>
+        <label>Anonyme ?</label>
+        <select name="anonyme">
+          <option value="false">Non</option><option value="true">Oui</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="full">
+        <label>Commentaire (optionnel)</label>
+        <textarea class="input" name="commentaire" rows="3" placeholder="Ton avis..."></textarea>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="full" style="text-align:right">
+        <button type="button" class="btn btn-outline" id="cancelCreate">Annuler</button>
+        <button type="submit" class="btn btn-primary">Envoyer le vouch</button>
+      </div>
+    </div>
+  </form>
+</script>

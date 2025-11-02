@@ -1,0 +1,21 @@
+{
+  "name": "vouch-website",
+  "version": "3.0.3",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "chalk": "^5.3.0",
+    "dotenv": "^16.4.5",
+    "ejs": "^3.1.10",
+    "express": "^4.19.2",
+    "express-session": "^1.17.3",
+    "express-ejs-layouts": "^2.5.1",
+    "mongoose": "^8.6.0",
+    "passport": "^0.7.0",
+    "passport-discord": "^0.1.4",
+    "node-fetch": "^3.3.2"
+  }
+}

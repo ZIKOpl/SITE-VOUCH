@@ -1,0 +1,41 @@
+<section>
+  <h1 class="title">Leaderboard</h1>
+
+  <% if (!rows.length) { %>
+    <div class="card"><p>Aucun vendeur n’a encore reçu de vouch.</p></div>
+  <% } else { %>
+    <% const top = rows.slice(0,3); const others = rows.slice(3); %>
+    <div class="podium">
+      <div class="pod silver">
+        <div class="rank">🥈 2</div>
+        <div class="circle"><%= (top[1]?.vendor || '?')[0] %></div>
+        <div><strong><%= top[1]?.vendor || '' %></strong></div>
+        <div class="muted"><%= top[1]?.count || 0 %> vouches</div>
+      </div>
+      <div class="pod gold" style="transform:translateY(-8px)">
+        <div class="rank">🥇 1</div>
+        <div class="circle"><%= (top[0]?.vendor || '?')[0] %></div>
+        <div><strong><%= top[0]?.vendor || '' %></strong></div>
+        <div class="muted"><%= top[0]?.count || 0 %> vouches</div>
+      </div>
+      <div class="pod bronze">
+        <div class="rank">🥉 3</div>
+        <div class="circle"><%= (top[2]?.vendor || '?')[0] %></div>
+        <div><strong><%= top[2]?.vendor || '' %></strong></div>
+        <div class="muted"><%= top[2]?.count || 0 %> vouches</div>
+      </div>
+    </div>
+
+    <% if (others.length) { %>
+      <div class="lb">
+        <% others.forEach(r => { %>
+          <div class="lb-row">
+            <div class="lb-rank"><%= r.rank %></div>
+            <div class="lb-vendor"><%= r.vendor %></div>
+            <div class="lb-count"><%= r.count %> vouches</div>
+          </div>
+        <% }) %>
+      </div>
+    <% } %>
+  <% } %>
+</section>
