@@ -134,3 +134,23 @@ document.addEventListener("click", async (e) => {
     alert("❌ " + err.message);
   }
 });
+
+// ===============================
+// 🔔 SYSTÈME DE NOTIFICATIONS
+// ===============================
+window.showToast = function (message, type = "info", duration = 4000) {
+  const container = document.getElementById("toasts");
+  if (!container) return console.error("Conteneur de toast introuvable");
+
+  const toast = document.createElement("div");
+  toast.className = `toast ${type}`;
+  toast.textContent = message;
+
+  container.appendChild(toast);
+
+  // Disparition automatique
+  setTimeout(() => {
+    toast.style.animation = "toastFadeOut 0.5s ease forwards";
+    setTimeout(() => toast.remove(), 500);
+  }, duration);
+};
