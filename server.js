@@ -24,7 +24,6 @@ app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
 app.use(expressLayouts);
 app.set("layout", "layout");
-app.use(express.static(path.join(__dirname, "public")));
 
 // Sessions
 app.use(
@@ -126,6 +125,7 @@ const ensureAdmin = (req, res, next) =>
     ? next()
     : res.status(403).send("Accès refusé (admin requis).");
 
+// Recalculate vouch IDs
 async function resequenceGuild(guild) {
   guild.vouches = (guild.vouches || [])
     .slice()
@@ -212,11 +212,13 @@ app.get("/config", ensureLogged, ensureAdmin, async (req, res) => {
   });
 });
 
-// ----------- API CONFIG -----------
+// ----------- API CONFIG (add/remove) -----------
+
+// ➕ Ajouter un vendeur
 app.post("/api/config/vendor/add", ensureLogged, ensureAdmin, async (req, res) => {
   try {
     const { id, label } = req.body;
-    if (!label || !label.trim())
+    if (!label?.trim())
       return res.status(400).json({ ok: false, message: "Label requis." });
 
     const gid = process.env.GUILD_ID;
@@ -234,10 +236,34 @@ app.post("/api/config/vendor/add", ensureLogged, ensureAdmin, async (req, res) =
   }
 });
 
+// 🗑 Supprimer un vendeur
+app.post("/api/config/vendor/remove", ensureLogged, ensureAdmin, async (req, res) => {
+  try {
+    const { key } = req.body;
+    if (!key)
+      return res.status(400).json({ ok: false, message: "Clé du vendeur requise." });
+
+    const gid = process.env.GUILD_ID;
+    const guild = await Guild.findOne({ guildId: gid });
+    if (!guild)
+      return res.status(404).json({ ok: false, message: "Guild introuvable." });
+
+    guild.vendors = (guild.vendors || []).filter(
+      (v) => v.id !== key && v.label !== key
+    );
+    await guild.save();
+    res.json({ ok: true });
+  } catch (err) {
+    console.error("❌ Erreur suppression vendeur :", err);
+    res.status(500).json({ ok: false, message: "Erreur serveur" });
+  }
+});
+
+// ➕ Ajouter un item
 app.post("/api/config/item/add", ensureLogged, ensureAdmin, async (req, res) => {
   try {
     const { name } = req.body;
-    if (!name || !name.trim())
+    if (!name?.trim())
       return res.status(400).json({ ok: false, message: "Nom requis." });
 
     const gid = process.env.GUILD_ID;
@@ -255,10 +281,32 @@ app.post("/api/config/item/add", ensureLogged, ensureAdmin, async (req, res) => 
   }
 });
 
+// 🗑 Supprimer un item
+app.post("/api/config/item/remove", ensureLogged, ensureAdmin, async (req, res) => {
+  try {
+    const { name } = req.body;
+    if (!name)
+      return res.status(400).json({ ok: false, message: "Nom requis." });
+
+    const gid = process.env.GUILD_ID;
+    const guild = await Guild.findOne({ guildId: gid });
+    if (!guild)
+      return res.status(404).json({ ok: false, message: "Guild introuvable." });
+
+    guild.items = (guild.items || []).filter((it) => it !== name);
+    await guild.save();
+    res.json({ ok: true });
+  } catch (err) {
+    console.error("❌ Erreur suppression item :", err);
+    res.status(500).json({ ok: false, message: "Erreur serveur" });
+  }
+});
+
+// ➕ Ajouter un moyen de paiement
 app.post("/api/config/payment/add", ensureLogged, ensureAdmin, async (req, res) => {
   try {
     const { name } = req.body;
-    if (!name || !name.trim())
+    if (!name?.trim())
       return res.status(400).json({ ok: false, message: "Nom requis." });
 
     const gid = process.env.GUILD_ID;
@@ -267,11 +315,33 @@ app.post("/api/config/payment/add", ensureLogged, ensureAdmin, async (req, res) 
       (await Guild.create({ guildId: gid }));
 
     guild.payments = guild.payments || [];
-    if (!guild.payments.includes(name.trim())) guild.payments.push(name.trim());
+    if (!guild.payments.includes(name.trim()))
+      guild.payments.push(name.trim());
     await guild.save();
     res.json({ ok: true });
   } catch (err) {
     console.error("❌ Erreur ajout payment :", err);
+    res.status(500).json({ ok: false, message: "Erreur serveur" });
+  }
+});
+
+// 🗑 Supprimer un moyen de paiement
+app.post("/api/config/payment/remove", ensureLogged, ensureAdmin, async (req, res) => {
+  try {
+    const { name } = req.body;
+    if (!name)
+      return res.status(400).json({ ok: false, message: "Nom requis." });
+
+    const gid = process.env.GUILD_ID;
+    const guild = await Guild.findOne({ guildId: gid });
+    if (!guild)
+      return res.status(404).json({ ok: false, message: "Guild introuvable." });
+
+    guild.payments = (guild.payments || []).filter((p) => p !== name);
+    await guild.save();
+    res.json({ ok: true });
+  } catch (err) {
+    console.error("❌ Erreur suppression paiement :", err);
     res.status(500).json({ ok: false, message: "Erreur serveur" });
   }
 });
@@ -289,6 +359,7 @@ app.get("/products", ensureLogged, async (req, res) => {
   });
 });
 
+// ➕ Ajouter un produit
 app.post("/api/product", ensureLogged, ensureAdmin, async (req, res) => {
   try {
     const { name, price, description, image } = req.body;
@@ -329,6 +400,7 @@ app.post("/api/product", ensureLogged, ensureAdmin, async (req, res) => {
   }
 });
 
+// 🗑 Supprimer un produit
 app.delete("/api/product/:id", ensureLogged, ensureAdmin, async (req, res) => {
   try {
     const id = parseInt(req.params.id, 10);
