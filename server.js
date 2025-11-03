@@ -17,7 +17,7 @@ const __dirname = path.dirname(__filename);
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static('public'));
+app.use(express.static("public"));
 
 // EJS + Layouts + Static
 app.set("view engine", "ejs");
@@ -27,12 +27,14 @@ app.set("layout", "layout");
 app.use(express.static(path.join(__dirname, "public")));
 
 // Sessions
-app.use(session({
-  secret: process.env.SESSION_SECRET || "change-me",
-  resave: false,
-  saveUninitialized: false,
-  cookie: { maxAge: 1000 * 60 * 60 * 24 * 7 }
-}));
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET || "change-me",
+    resave: false,
+    saveUninitialized: false,
+    cookie: { maxAge: 1000 * 60 * 60 * 24 * 7 },
+  })
+);
 
 // Passport Discord
 passport.serializeUser((user, done) => done(null, user));
@@ -40,26 +42,41 @@ passport.deserializeUser((obj, done) => done(null, obj));
 
 const ADMIN_BIT = 0x8;
 
-passport.use(new DiscordStrategy({
-  clientID: process.env.DISCORD_CLIENT_ID,
-  clientSecret: process.env.DISCORD_CLIENT_SECRET,
-  callbackURL: process.env.DISCORD_CALLBACK_URL,
-  scope: ["identify", "guilds"]
-}, async (accessToken, refreshToken, profile, done) => {
-  try {
-    const guilds = profile.guilds || [];
-    const target = guilds.find(g => g.id === process.env.GUILD_ID);
-    const isAdmin = !!(target && (target.permissions & ADMIN_BIT));
-    done(null, { id: profile.id, username: profile.username, avatar: profile.avatar, isAdmin });
-  } catch (e) {
-    done(null, { id: profile.id, username: profile.username, avatar: profile.avatar, isAdmin: false });
-  }
-}));
+passport.use(
+  new DiscordStrategy(
+    {
+      clientID: process.env.DISCORD_CLIENT_ID,
+      clientSecret: process.env.DISCORD_CLIENT_SECRET,
+      callbackURL: process.env.DISCORD_CALLBACK_URL,
+      scope: ["identify", "guilds"],
+    },
+    async (accessToken, refreshToken, profile, done) => {
+      try {
+        const guilds = profile.guilds || [];
+        const target = guilds.find((g) => g.id === process.env.GUILD_ID);
+        const isAdmin = !!(target && target.permissions & ADMIN_BIT);
+        done(null, {
+          id: profile.id,
+          username: profile.username,
+          avatar: profile.avatar,
+          isAdmin,
+        });
+      } catch (e) {
+        done(null, {
+          id: profile.id,
+          username: profile.username,
+          avatar: profile.avatar,
+          isAdmin: false,
+        });
+      }
+    }
+  )
+);
 
 app.use(passport.initialize());
 app.use(passport.session());
 
-// Middleware locals (pour les vues)
+// Middleware locals
 app.use((req, res, next) => {
   res.locals.user = req.user;
   res.locals.path = req.path;
@@ -81,13 +98,16 @@ app.use((req, res, next) => {
 // Helpers
 function fmtDate(ts) {
   return new Date(ts).toLocaleString("fr-FR", {
-    day: "2-digit", month: "2-digit", year: "numeric",
-    hour: "2-digit", minute: "2-digit"
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
   });
 }
 function computeLeaderboard(gdata) {
   const counts = new Map();
-  (gdata.vouches || []).forEach(v => {
+  (gdata.vouches || []).forEach((v) => {
     const key = v.vendorId || v.vendorLabel || "Inconnu";
     counts.set(key, (counts.get(key) || 0) + 1);
   });
@@ -95,18 +115,21 @@ function computeLeaderboard(gdata) {
   return rows.map(([key, n], i) => ({
     rank: i + 1,
     vendor: /^\d+$/.test(key) ? "@" + key : key,
-    count: n
+    count: n,
   }));
 }
 
 const ensureLogged = (req, res, next) =>
   req.user ? next() : res.redirect("/auth/discord");
 const ensureAdmin = (req, res, next) =>
-  req.user?.isAdmin ? next() : res.status(403).send("Accès refusé (admin requis).");
+  req.user?.isAdmin
+    ? next()
+    : res.status(403).send("Accès refusé (admin requis).");
 
-// Recalculate vouch IDs
 async function resequenceGuild(guild) {
-  guild.vouches = (guild.vouches || []).slice().sort((a, b) => a.createdAt - b.createdAt);
+  guild.vouches = (guild.vouches || [])
+    .slice()
+    .sort((a, b) => a.createdAt - b.createdAt);
   let i = 1;
   for (const v of guild.vouches) v.id = i++;
   guild.nextId = (guild.vouches?.length || 0) + 1;
@@ -115,11 +138,15 @@ async function resequenceGuild(guild) {
 
 // ----------- AUTH ROUTES -----------
 app.get("/auth/discord", passport.authenticate("discord"));
-app.get("/auth/discord/callback",
+app.get(
+  "/auth/discord/callback",
   passport.authenticate("discord", { failureRedirect: "/login-failed" }),
-  (req, res) => res.redirect("/"));
+  (req, res) => res.redirect("/")
+);
 app.get("/logout", (req, res) => req.logout(() => res.redirect("/")));
-app.get("/login-failed", (req, res) => res.send("Connexion Discord échouée."));
+app.get("/login-failed", (req, res) =>
+  res.send("Connexion Discord échouée.")
+);
 
 // ----------- PAGES -----------
 app.get("/", (req, res) =>
@@ -128,9 +155,17 @@ app.get("/", (req, res) =>
 
 app.get("/vouches", ensureLogged, async (req, res) => {
   const gid = process.env.GUILD_ID;
-  const guild = (await Guild.findOne({ guildId: gid }).lean()) || { vouches: [], vendors: [], items: [], payments: [] };
-  const vouches = (guild.vouches || []).slice().sort((a, b) => b.createdAt - a.createdAt);
-  vouches.forEach(v => v.createdAtFmt = fmtDate(v.createdAt));
+  const guild =
+    (await Guild.findOne({ guildId: gid }).lean()) || {
+      vouches: [],
+      vendors: [],
+      items: [],
+      payments: [],
+    };
+  const vouches = (guild.vouches || [])
+    .slice()
+    .sort((a, b) => b.createdAt - a.createdAt);
+  vouches.forEach((v) => (v.createdAtFmt = fmtDate(v.createdAt)));
   res.render("vouches", {
     user: req.user,
     vouches,
@@ -138,20 +173,34 @@ app.get("/vouches", ensureLogged, async (req, res) => {
     items: guild.items || [],
     payments: guild.payments || [],
     title: "Tous les vouches",
-    path: "/vouches"
+    path: "/vouches",
   });
 });
 
 app.get("/leaderboard", ensureLogged, async (req, res) => {
   const gid = process.env.GUILD_ID;
-  const guild = (await Guild.findOne({ guildId: gid }).lean()) || { vouches: [], vendors: [] };
+  const guild =
+    (await Guild.findOne({ guildId: gid }).lean()) || {
+      vouches: [],
+      vendors: [],
+    };
   const rows = computeLeaderboard(guild);
-  res.render("leaderboard", { user: req.user, rows, title: "Leaderboard", path: "/leaderboard" });
+  res.render("leaderboard", {
+    user: req.user,
+    rows,
+    title: "Leaderboard",
+    path: "/leaderboard",
+  });
 });
 
 app.get("/config", ensureLogged, ensureAdmin, async (req, res) => {
   const gid = process.env.GUILD_ID;
-  const guild = (await Guild.findOne({ guildId: gid }).lean()) || { vendors: [], items: [], payments: [] };
+  const guild =
+    (await Guild.findOne({ guildId: gid }).lean()) || {
+      vendors: [],
+      items: [],
+      payments: [],
+    };
   res.render("config", {
     user: req.user,
     gid,
@@ -159,16 +208,79 @@ app.get("/config", ensureLogged, ensureAdmin, async (req, res) => {
     items: guild.items || [],
     payments: guild.payments || [],
     title: "Configuration",
-    path: "/config"
+    path: "/config",
   });
 });
 
-// ----------- PAGE PRODUITS -----------
+// ----------- API CONFIG -----------
+app.post("/api/config/vendor/add", ensureLogged, ensureAdmin, async (req, res) => {
+  try {
+    const { id, label } = req.body;
+    if (!label || !label.trim())
+      return res.status(400).json({ ok: false, message: "Label requis." });
+
+    const gid = process.env.GUILD_ID;
+    const guild =
+      (await Guild.findOne({ guildId: gid })) ||
+      (await Guild.create({ guildId: gid }));
+
+    guild.vendors = guild.vendors || [];
+    guild.vendors.push({ id: id?.trim() || null, label: label.trim() });
+    await guild.save();
+    res.json({ ok: true });
+  } catch (err) {
+    console.error("❌ Erreur ajout vendeur :", err);
+    res.status(500).json({ ok: false, message: "Erreur serveur" });
+  }
+});
+
+app.post("/api/config/item/add", ensureLogged, ensureAdmin, async (req, res) => {
+  try {
+    const { name } = req.body;
+    if (!name || !name.trim())
+      return res.status(400).json({ ok: false, message: "Nom requis." });
+
+    const gid = process.env.GUILD_ID;
+    const guild =
+      (await Guild.findOne({ guildId: gid })) ||
+      (await Guild.create({ guildId: gid }));
+
+    guild.items = guild.items || [];
+    if (!guild.items.includes(name.trim())) guild.items.push(name.trim());
+    await guild.save();
+    res.json({ ok: true });
+  } catch (err) {
+    console.error("❌ Erreur ajout item :", err);
+    res.status(500).json({ ok: false, message: "Erreur serveur" });
+  }
+});
+
+app.post("/api/config/payment/add", ensureLogged, ensureAdmin, async (req, res) => {
+  try {
+    const { name } = req.body;
+    if (!name || !name.trim())
+      return res.status(400).json({ ok: false, message: "Nom requis." });
+
+    const gid = process.env.GUILD_ID;
+    const guild =
+      (await Guild.findOne({ guildId: gid })) ||
+      (await Guild.create({ guildId: gid }));
+
+    guild.payments = guild.payments || [];
+    if (!guild.payments.includes(name.trim())) guild.payments.push(name.trim());
+    await guild.save();
+    res.json({ ok: true });
+  } catch (err) {
+    console.error("❌ Erreur ajout payment :", err);
+    res.status(500).json({ ok: false, message: "Erreur serveur" });
+  }
+});
+
+// ----------- API PRODUITS -----------
 app.get("/products", ensureLogged, async (req, res) => {
   const gid = process.env.GUILD_ID;
   const guild =
     (await Guild.findOne({ guildId: gid }).lean()) || { products: [] };
-
   res.render("products", {
     user: req.user,
     products: guild.products || [],
@@ -177,17 +289,11 @@ app.get("/products", ensureLogged, async (req, res) => {
   });
 });
 
-// ----------- API PRODUITS -----------
-
-// ➕ Créer un produit
 app.post("/api/product", ensureLogged, ensureAdmin, async (req, res) => {
   try {
     const { name, price, description, image } = req.body;
-    if (!name || !name.trim()) {
-      return res
-        .status(400)
-        .json({ ok: false, message: "Nom du produit requis." });
-    }
+    if (!name?.trim())
+      return res.status(400).json({ ok: false, message: "Nom du produit requis." });
 
     const gid = process.env.GUILD_ID;
     const guild =
@@ -195,8 +301,6 @@ app.post("/api/product", ensureLogged, ensureAdmin, async (req, res) => {
       (await Guild.create({ guildId: gid }));
 
     guild.products = guild.products || [];
-
-    // ✅ Corrige automatiquement les anciens IDs invalides
     guild.products = guild.products.map((p, i) => ({
       ...p,
       id: typeof p.id === "number" && !isNaN(p.id) ? p.id : i + 1,
@@ -221,163 +325,32 @@ app.post("/api/product", ensureLogged, ensureAdmin, async (req, res) => {
     res.json({ ok: true });
   } catch (err) {
     console.error("❌ Erreur ajout produit :", err);
-    res
-      .status(500)
-      .json({ ok: false, message: err.message || "Erreur serveur" });
+    res.status(500).json({ ok: false, message: "Erreur serveur" });
   }
 });
 
-// 🗑 Supprimer un produit
 app.delete("/api/product/:id", ensureLogged, ensureAdmin, async (req, res) => {
   try {
     const id = parseInt(req.params.id, 10);
-    if (isNaN(id)) {
+    if (isNaN(id))
       return res.status(400).json({ ok: false, message: "ID invalide" });
-    }
 
     const gid = process.env.GUILD_ID;
     const guild = await Guild.findOne({ guildId: gid });
     if (!guild)
-      return res
-        .status(404)
-        .json({ ok: false, message: "Guild introuvable" });
+      return res.status(404).json({ ok: false, message: "Guild introuvable" });
 
-    guild.products = (guild.products || []).map((p, i) => ({
-      ...p,
-      id: typeof p.id === "number" && !isNaN(p.id) ? p.id : i + 1,
-    }));
-
-    const before = guild.products.length;
-    guild.products = guild.products.filter((p) => p.id !== id);
-
-    if (guild.products.length === before) {
-      return res
-        .status(404)
-        .json({ ok: false, message: "Produit introuvable" });
-    }
-
+    guild.products = (guild.products || []).filter((p) => p.id !== id);
     await guild.save();
     res.json({ ok: true });
   } catch (err) {
     console.error("❌ Erreur suppression produit :", err);
-    res
-      .status(500)
-      .json({ ok: false, message: err.message || "Erreur serveur" });
-  }
-});
-
-// ----------- API VOUCH -----------
-app.post("/api/vouch", ensureLogged, async (req, res) => {
-  try {
-    const { vendeur, quantite, item, prix, moyen_de_paiement, note, commentaire, anonyme } = req.body;
-    const gid = process.env.GUILD_ID;
-    const guild = (await Guild.findOne({ guildId: gid })) || await Guild.create({ guildId: gid });
-
-    const vendor = (guild.vendors || []).find(v => v.id === vendeur || v.label === vendeur);
-    const vendeurId = vendor && /^\d+$/.test(vendor?.id || "") ? vendor.id : null;
-    const vendorLabel = vendor ? vendor.label : vendeur;
-    const n = parseInt(note, 10);
-    const qty = parseInt(quantite, 10) || 1;
-    const anonymous = String(anonyme) === "true";
-
-    const vouch = {
-      id: guild.nextId || 1,
-      note: isNaN(n) ? 0 : n,
-      comment: (commentaire || "").trim(),
-      anonymous,
-      vendorId: vendeurId,
-      vendorLabel,
-      item,
-      qty,
-      prix,
-      payment: moyen_de_paiement,
-      authorId: req.user.id,
-      authorTag: req.user.username,
-      authorAvatar: req.user.avatar
-        ? `https://cdn.discordapp.com/avatars/${req.user.id}/${req.user.avatar}.png`
-        : null,
-      createdAt: Date.now(),
-      source: "site"
-    };
-
-    guild.vouches = guild.vouches || [];
-    guild.vouches.push(vouch);
-    await resequenceGuild(guild);
-
-    // Envoi Discord webhook
-    const webhook = process.env.DISCORD_WEBHOOK_URL;
-    if (webhook) {
-      const star = (x) => "⭐".repeat(x) + "✩".repeat(5 - x);
-      const embed = {
-        color: 0xff0000,
-        title: `New Vouch ${vouch.anonymous ? "(anonyme)" : `de ${vouch.authorTag}`} (via SITE)`,
-        thumbnail: vouch.authorAvatar ? { url: vouch.authorAvatar } : undefined,
-        fields: [
-          { name: "Note", value: `**${star(vouch.note)}** (${vouch.note}/5)` },
-          { name: "Vendeur", value: vouch.vendorLabel || (vouch.vendorId ? `<@${vouch.vendorId}>` : "Inconnu") },
-          { name: "Item vendu", value: `x${vouch.qty} ${vouch.item} (${vouch.prix} via ${vouch.payment})` },
-          { name: "Vouch N°", value: String(vouch.id), inline: true },
-          { name: "Vouch par", value: vouch.anonymous ? "_Anonyme_" : `<@${vouch.authorId}>`, inline: true },
-          { name: "Date du vouch", value: new Date(vouch.createdAt).toLocaleString("fr-FR"), inline: true },
-          ...(vouch.comment ? [{ name: "Commentaire", value: vouch.comment }] : [])
-        ],
-        footer: { text: "Service proposé par HOME VOUCH (site web)" }
-      };
-      try {
-        await fetch(webhook, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ embeds: [embed] })
-        });
-      } catch {}
-    }
-
-    // MAJ du leaderboard sur le bot
-    try {
-      await fetch("http://localhost:3001/update-leaderboard", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ guildId: process.env.GUILD_ID })
-      });
-    } catch (err) {
-      console.warn("⚠️ Erreur de synchro leaderboard bot :", err.message);
-    }
-
-    res.json({ ok: true, id: vouch.id, nextId: guild.nextId });
-  } catch (e) {
-    console.error(e);
-    res.status(400).json({ ok: false, message: e.message || "Erreur" });
-  }
-});
-
-app.delete("/api/vouch/:id", ensureLogged, ensureAdmin, async (req, res) => {
-  try {
-    const id = parseInt(req.params.id, 10);
-    if (isNaN(id)) return res.status(400).json({ ok: false, message: "ID invalide" });
-    const gid = process.env.GUILD_ID;
-    const guild = (await Guild.findOne({ guildId: gid })) || await Guild.create({ guildId: gid });
-    const before = (guild.vouches || []).length;
-    guild.vouches = (guild.vouches || []).filter(v => v.id !== id);
-    if (guild.vouches.length === before) return res.status(404).json({ ok: false, message: "Vouch introuvable" });
-    await resequenceGuild(guild);
-
-    try {
-      await fetch("http://localhost:3001/update-leaderboard", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ guildId: process.env.GUILD_ID })
-      });
-    } catch (err) {
-      console.warn("⚠️ Erreur MAJ leaderboard bot :", err.message);
-    }
-
-    res.json({ ok: true, nextId: guild.nextId });
-  } catch (e) {
-    console.error(e);
-    res.status(500).json({ ok: false, message: "Erreur suppression" });
+    res.status(500).json({ ok: false, message: "Erreur serveur" });
   }
 });
 
 // ----------- SERVER -----------
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(chalk.green(`🌐 Site démarré sur http://localhost:${PORT}`)));
+app.listen(PORT, () =>
+  console.log(chalk.green(`🌐 Site démarré sur http://localhost:${PORT}`))
+);
