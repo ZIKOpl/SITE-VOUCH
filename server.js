@@ -19,7 +19,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static("public"));
 
-// EJS + Layouts + Static
+// EJS + Layouts
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
 app.use(expressLayouts);
@@ -35,7 +35,7 @@ app.use(
   })
 );
 
-// Passport Discord
+// Discord Auth
 passport.serializeUser((user, done) => done(null, user));
 passport.deserializeUser((obj, done) => done(null, obj));
 
@@ -75,7 +75,7 @@ passport.use(
 app.use(passport.initialize());
 app.use(passport.session());
 
-// Middleware locals
+// Locals
 app.use((req, res, next) => {
   res.locals.user = req.user;
   res.locals.path = req.path;
@@ -125,7 +125,7 @@ const ensureAdmin = (req, res, next) =>
     ? next()
     : res.status(403).send("Accès refusé (admin requis).");
 
-// Recalculate vouch IDs
+// Resequence IDs
 async function resequenceGuild(guild) {
   guild.vouches = (guild.vouches || [])
     .slice()
@@ -212,7 +212,7 @@ app.get("/config", ensureLogged, ensureAdmin, async (req, res) => {
   });
 });
 
-// ----------- API CONFIG (add/remove) -----------
+// ----------- API CONFIG (add/remove corrigées) -----------
 
 // ➕ Ajouter un vendeur
 app.post("/api/config/vendor/add", ensureLogged, ensureAdmin, async (req, res) => {
@@ -236,23 +236,28 @@ app.post("/api/config/vendor/add", ensureLogged, ensureAdmin, async (req, res) =
   }
 });
 
-// 🗑 Supprimer un vendeur
+// 🗑 Supprimer un vendeur (corrigé)
 app.post("/api/config/vendor/remove", ensureLogged, ensureAdmin, async (req, res) => {
   try {
     const { key } = req.body;
-    if (!key)
-      return res.status(400).json({ ok: false, message: "Clé du vendeur requise." });
+    if (!key || key.trim() === "")
+      return res.status(400).json({ ok: false, message: "Clé du vendeur manquante." });
 
     const gid = process.env.GUILD_ID;
     const guild = await Guild.findOne({ guildId: gid });
     if (!guild)
       return res.status(404).json({ ok: false, message: "Guild introuvable." });
 
+    const before = guild.vendors?.length || 0;
     guild.vendors = (guild.vendors || []).filter(
-      (v) => v.id !== key && v.label !== key
+      (v) => v.id?.toString() !== key && v.label !== key
     );
+
+    if (guild.vendors.length === before)
+      return res.status(404).json({ ok: false, message: "Vendeur introuvable." });
+
     await guild.save();
-    res.json({ ok: true });
+    res.json({ ok: true, message: "Vendeur supprimé avec succès." });
   } catch (err) {
     console.error("❌ Erreur suppression vendeur :", err);
     res.status(500).json({ ok: false, message: "Erreur serveur" });
@@ -281,11 +286,11 @@ app.post("/api/config/item/add", ensureLogged, ensureAdmin, async (req, res) => 
   }
 });
 
-// 🗑 Supprimer un item
+// 🗑 Supprimer un item (corrigé)
 app.post("/api/config/item/remove", ensureLogged, ensureAdmin, async (req, res) => {
   try {
     const { name } = req.body;
-    if (!name)
+    if (!name?.trim())
       return res.status(400).json({ ok: false, message: "Nom requis." });
 
     const gid = process.env.GUILD_ID;
@@ -293,9 +298,14 @@ app.post("/api/config/item/remove", ensureLogged, ensureAdmin, async (req, res) 
     if (!guild)
       return res.status(404).json({ ok: false, message: "Guild introuvable." });
 
-    guild.items = (guild.items || []).filter((it) => it !== name);
+    const before = guild.items?.length || 0;
+    guild.items = (guild.items || []).filter((it) => it !== name.trim());
+
+    if (guild.items.length === before)
+      return res.status(404).json({ ok: false, message: "Item introuvable." });
+
     await guild.save();
-    res.json({ ok: true });
+    res.json({ ok: true, message: "Item supprimé." });
   } catch (err) {
     console.error("❌ Erreur suppression item :", err);
     res.status(500).json({ ok: false, message: "Erreur serveur" });
@@ -325,11 +335,11 @@ app.post("/api/config/payment/add", ensureLogged, ensureAdmin, async (req, res) 
   }
 });
 
-// 🗑 Supprimer un moyen de paiement
+// 🗑 Supprimer un moyen de paiement (corrigé)
 app.post("/api/config/payment/remove", ensureLogged, ensureAdmin, async (req, res) => {
   try {
     const { name } = req.body;
-    if (!name)
+    if (!name?.trim())
       return res.status(400).json({ ok: false, message: "Nom requis." });
 
     const gid = process.env.GUILD_ID;
@@ -337,86 +347,16 @@ app.post("/api/config/payment/remove", ensureLogged, ensureAdmin, async (req, re
     if (!guild)
       return res.status(404).json({ ok: false, message: "Guild introuvable." });
 
-    guild.payments = (guild.payments || []).filter((p) => p !== name);
+    const before = guild.payments?.length || 0;
+    guild.payments = (guild.payments || []).filter((p) => p !== name.trim());
+
+    if (guild.payments.length === before)
+      return res.status(404).json({ ok: false, message: "Paiement introuvable." });
+
     await guild.save();
-    res.json({ ok: true });
+    res.json({ ok: true, message: "Moyen de paiement supprimé." });
   } catch (err) {
     console.error("❌ Erreur suppression paiement :", err);
-    res.status(500).json({ ok: false, message: "Erreur serveur" });
-  }
-});
-
-// ----------- API PRODUITS -----------
-app.get("/products", ensureLogged, async (req, res) => {
-  const gid = process.env.GUILD_ID;
-  const guild =
-    (await Guild.findOne({ guildId: gid }).lean()) || { products: [] };
-  res.render("products", {
-    user: req.user,
-    products: guild.products || [],
-    title: "Produits",
-    path: "/products",
-  });
-});
-
-// ➕ Ajouter un produit
-app.post("/api/product", ensureLogged, ensureAdmin, async (req, res) => {
-  try {
-    const { name, price, description, image } = req.body;
-    if (!name?.trim())
-      return res.status(400).json({ ok: false, message: "Nom du produit requis." });
-
-    const gid = process.env.GUILD_ID;
-    const guild =
-      (await Guild.findOne({ guildId: gid })) ||
-      (await Guild.create({ guildId: gid }));
-
-    guild.products = guild.products || [];
-    guild.products = guild.products.map((p, i) => ({
-      ...p,
-      id: typeof p.id === "number" && !isNaN(p.id) ? p.id : i + 1,
-    }));
-
-    const lastId =
-      guild.products.length > 0
-        ? guild.products[guild.products.length - 1].id
-        : 0;
-    const newId = lastId + 1;
-
-    guild.products.push({
-      id: newId,
-      name: name.trim(),
-      price: price ? parseFloat(price) : null,
-      description: description?.trim() || "",
-      image: image?.trim() || "",
-      createdAt: Date.now(),
-    });
-
-    await guild.save();
-    res.json({ ok: true });
-  } catch (err) {
-    console.error("❌ Erreur ajout produit :", err);
-    res.status(500).json({ ok: false, message: "Erreur serveur" });
-  }
-});
-
-// 🗑 Supprimer un produit
-app.delete("/api/product/:id", ensureLogged, ensureAdmin, async (req, res) => {
-  try {
-    const id = parseInt(req.params.id, 10);
-    if (isNaN(id))
-      return res.status(400).json({ ok: false, message: "ID invalide" });
-
-    const gid = process.env.GUILD_ID;
-    const guild = await Guild.findOne({ guildId: gid });
-    if (!guild)
-      return res.status(404).json({ ok: false, message: "Guild introuvable" });
-
-    guild.products = (guild.products || []).filter((p) => p.id !== id);
-    await guild.save();
-    res.json({ ok: true });
-  } catch (err) {
-    console.error("❌ Erreur suppression produit :", err);
     res.status(500).json({ ok: false, message: "Erreur serveur" });
   }
 });
