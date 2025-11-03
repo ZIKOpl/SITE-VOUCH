@@ -7,7 +7,7 @@
     </div>
   </div>
 
-  <!-- 🧍 Vendors -->
+  <!-- 🧍 Vendeurs -->
   <div class="card" style="margin-bottom:16px">
     <div class="card head"><div>Vendeurs</div></div>
     <div class="form-row">
@@ -15,12 +15,20 @@
       <input id="vendorLabel" class="input" placeholder="Nom / label (obligatoire)">
       <button id="addVendor" class="btn btn-primary">Ajouter</button>
     </div>
+
     <div class="table" style="margin-top:12px">
       <% (vendors || []).forEach(v => { %>
         <div class="row">
-          <div><strong><%- v.label %></strong> <span class="muted"><%- v.id ? '('+v.id+')' : '' %></span></div>
+          <div>
+            <strong><%- v.label %></strong>
+            <span class="muted"><%- v.id ? '(' + v.id + ')' : '' %></span>
+          </div>
           <div class="actions">
-            <button class="btn btn-outline" data-remove-vendor="<%- v.id || v.label %>">Supprimer</button>
+            <button class="btn btn-outline small" 
+                    data-remove-vendor="<%- v.id || v.label %>" 
+                    data-remove-vendor-label="<%- v.label %>">
+              🗑 Supprimer
+            </button>
           </div>
         </div>
       <% }) %>
@@ -34,12 +42,13 @@
       <input id="itemName" class="input" placeholder="Nom de l'item">
       <button id="addItem" class="btn btn-primary">Ajouter</button>
     </div>
+
     <div class="table" style="margin-top:12px">
       <% (items || []).forEach(it => { %>
         <div class="row">
           <div><%- it %></div>
           <div class="actions">
-            <button class="btn btn-outline" data-remove-item="<%- it %>">Supprimer</button>
+            <button class="btn btn-outline small" data-remove-item="<%- it %>">🗑 Supprimer</button>
           </div>
         </div>
       <% }) %>
@@ -53,12 +62,13 @@
       <input id="payName" class="input" placeholder="Nom du moyen de paiement">
       <button id="addPay" class="btn btn-primary">Ajouter</button>
     </div>
+
     <div class="table" style="margin-top:12px">
       <% (payments || []).forEach(p => { %>
         <div class="row">
           <div><%- p %></div>
           <div class="actions">
-            <button class="btn btn-outline" data-remove-pay="<%- p %>">Supprimer</button>
+            <button class="btn btn-outline small" data-remove-pay="<%- p %>">🗑 Supprimer</button>
           </div>
         </div>
       <% }) %>
@@ -67,108 +77,130 @@
 </section>
 
 <script>
-/* --- Helper API --- */
+/* ---------------------------
+   🧩 Helper : POST JSON
+---------------------------- */
 async function postJSON(url, body) {
   const res = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body)
   });
-  const json = await res.json();
-  if (!res.ok) throw new Error(json.message || 'Erreur serveur');
+  let json = {};
+  try { json = await res.json(); } catch {}
+  if (!res.ok) throw new Error(json.message || "Erreur serveur");
   return json;
 }
 
-/* --- Ajout d’un vendeur --- */
-document.getElementById('addVendor')?.addEventListener('click', async () => {
-  const id = document.getElementById('vendorId').value.trim();
-  const label = document.getElementById('vendorLabel').value.trim();
-  if (!label) return showToast('⚠️ Le label est obligatoire.', 'error');
+/* ---------------------------
+   ➕ Ajout vendeur
+---------------------------- */
+document.getElementById("addVendor")?.addEventListener("click", async () => {
+  const id = document.getElementById("vendorId").value.trim();
+  const label = document.getElementById("vendorLabel").value.trim();
+  if (!label) return showToast("⚠️ Le label est obligatoire.", "error");
 
   try {
-    await postJSON('/api/config/vendor/add', { id, label });
-    showToast('✅ Vendeur ajouté avec succès', 'success');
-    setTimeout(() => location.reload(), 1000);
+    await postJSON("/api/config/vendor/add", { id, label });
+    showToast("✅ Vendeur ajouté avec succès", "success");
+    setTimeout(() => location.reload(), 800);
   } catch (e) {
-    showToast('❌ ' + e.message, 'error');
+    showToast("❌ " + e.message, "error");
   }
 });
 
-/* --- Suppression d’un vendeur --- */
-document.querySelectorAll('[data-remove-vendor]')?.forEach(btn => {
-  btn.addEventListener('click', async () => {
-    const key = btn.getAttribute('data-remove-vendor');
-    const confirmed = await showConfirm(`Supprimer le vendeur "${key}" ?`);
+/* ---------------------------
+   🗑 Suppression vendeur
+---------------------------- */
+document.querySelectorAll("[data-remove-vendor]")?.forEach((btn) => {
+  btn.addEventListener("click", async () => {
+    const key = btn.getAttribute("data-remove-vendor");
+    const label = btn.getAttribute("data-remove-vendor-label") || key;
+    if (!key) return showToast("Erreur : clé manquante.", "error");
+
+    const confirmed = await showConfirm(`Supprimer le vendeur "${label}" ?`);
     if (!confirmed) return;
 
     try {
-      await postJSON('/api/config/vendor/remove', { key });
-      showToast('✅ Vendeur supprimé avec succès', 'success');
-      setTimeout(() => location.reload(), 1000);
+      await postJSON("/api/config/vendor/remove", { key });
+      showToast("✅ Vendeur supprimé avec succès", "success");
+      setTimeout(() => location.reload(), 800);
     } catch (e) {
-      showToast('❌ ' + e.message, 'error');
+      showToast("❌ " + e.message, "error");
     }
   });
 });
 
-/* --- Ajout d’un item --- */
-document.getElementById('addItem')?.addEventListener('click', async () => {
-  const name = document.getElementById('itemName').value.trim();
-  if (!name) return showToast("⚠️ Entrez un nom d'item.", 'error');
+/* ---------------------------
+   ➕ Ajout item
+---------------------------- */
+document.getElementById("addItem")?.addEventListener("click", async () => {
+  const name = document.getElementById("itemName").value.trim();
+  if (!name) return showToast("⚠️ Entrez un nom d'item.", "error");
 
   try {
-    await postJSON('/api/config/item/add', { name });
-    showToast('✅ Item ajouté avec succès', 'success');
-    setTimeout(() => location.reload(), 1000);
+    await postJSON("/api/config/item/add", { name });
+    showToast("✅ Item ajouté avec succès", "success");
+    setTimeout(() => location.reload(), 800);
   } catch (e) {
-    showToast('❌ ' + e.message, 'error');
+    showToast("❌ " + e.message, "error");
   }
 });
 
-/* --- Suppression d’un item --- */
-document.querySelectorAll('[data-remove-item]')?.forEach(btn => {
-  btn.addEventListener('click', async () => {
-    const name = btn.getAttribute('data-remove-item');
-    const confirmed = await showConfirm(`Supprimer l’item "${name}" ?`);
+/* ---------------------------
+   🗑 Suppression item
+---------------------------- */
+document.querySelectorAll("[data-remove-item]")?.forEach((btn) => {
+  btn.addEventListener("click", async () => {
+    const name = btn.getAttribute("data-remove-item");
+    if (!name) return showToast("Erreur : nom manquant.", "error");
+
+    const confirmed = await showConfirm(`Supprimer l'item "${name}" ?`);
     if (!confirmed) return;
 
     try {
-      await postJSON('/api/config/item/remove', { name });
-      showToast('✅ Item supprimé avec succès', 'success');
-      setTimeout(() => location.reload(), 1000);
+      await postJSON("/api/config/item/remove", { name });
+      showToast("✅ Item supprimé", "success");
+      setTimeout(() => location.reload(), 800);
     } catch (e) {
-      showToast('❌ ' + e.message, 'error');
+      showToast("❌ " + e.message, "error");
     }
   });
 });
 
-/* --- Ajout d’un moyen de paiement --- */
-document.getElementById('addPay')?.addEventListener('click', async () => {
-  const name = document.getElementById('payName').value.trim();
-  if (!name) return showToast('⚠️ Entrez un moyen de paiement.', 'error');
+/* ---------------------------
+   ➕ Ajout moyen de paiement
+---------------------------- */
+document.getElementById("addPay")?.addEventListener("click", async () => {
+  const name = document.getElementById("payName").value.trim();
+  if (!name) return showToast("⚠️ Entrez un moyen de paiement.", "error");
 
   try {
-    await postJSON('/api/config/payment/add', { name });
-    showToast('✅ Moyen de paiement ajouté', 'success');
-    setTimeout(() => location.reload(), 1000);
+    await postJSON("/api/config/payment/add", { name });
+    showToast("✅ Moyen de paiement ajouté", "success");
+    setTimeout(() => location.reload(), 800);
   } catch (e) {
-    showToast('❌ ' + e.message, 'error');
+    showToast("❌ " + e.message, "error");
   }
 });
 
-/* --- Suppression d’un moyen de paiement --- */
-document.querySelectorAll('[data-remove-pay]')?.forEach(btn => {
-  btn.addEventListener('click', async () => {
-    const name = btn.getAttribute('data-remove-pay');
+/* ---------------------------
+   🗑 Suppression moyen de paiement
+---------------------------- */
+document.querySelectorAll("[data-remove-pay]")?.forEach((btn) => {
+  btn.addEventListener("click", async () => {
+    const name = btn.getAttribute("data-remove-pay");
+    if (!name) return showToast("Erreur : nom manquant.", "error");
+
     const confirmed = await showConfirm(`Supprimer le moyen de paiement "${name}" ?`);
     if (!confirmed) return;
 
     try {
-      await postJSON('/api/config/payment/remove', { name });
-      showToast('✅ Moyen de paiement supprimé', 'success');
-      setTimeout(() => location.reload(), 1000);
+      await postJSON("/api/config/payment/remove", { name });
+      showToast("✅ Moyen de paiement supprimé", "success");
+      setTimeout(() => location.reload(), 800);
     } catch (e) {
-      showToast('❌ ' + e.message, 'error');
+      showToast("❌ " + e.message, "error");
     }
   });
 });
