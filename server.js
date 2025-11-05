@@ -8,6 +8,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import chalk from "chalk";
 import expressLayouts from "express-ejs-layouts";
+import fetch from "node-fetch";
 import Guild from "./models/Guild.js";
 
 const __filename = fileURLToPath(import.meta.url);
