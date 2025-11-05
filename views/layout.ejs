@@ -2,66 +2,71 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <title><%= title || "Vouch" %> | HOME VOUCH</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title><%= title %> - HOME VOUCH</title>
 
-  <!-- 🌈 Styles -->
-  <link rel="stylesheet" href="/css/style.css" />
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet" />
 </head>
-
 <body>
-  <!-- Header -->
+  <!-- =========================================================
+       HEADER / NAVIGATION
+       ========================================================= -->
   <header class="app-header">
-    <div class="container header-row">
-      <div class="brand"><a href="/">HOME VOUCH</a></div>
+    <div class="header-row container">
+      <div class="brand">
+        <a href="/">HOME VOUCH</a>
+      </div>
 
-      <nav class="nav">
+      <!-- Bouton burger mobile -->
+      <button class="burger" id="burger" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+
+      <nav class="nav" id="navMenu">
         <a href="/vouches" class="<%= path === '/vouches' ? 'active' : '' %>">Vouches</a>
         <a href="/leaderboard" class="<%= path === '/leaderboard' ? 'active' : '' %>">Leaderboard</a>
         <a href="/products" class="<%= path === '/products' ? 'active' : '' %>">Produits</a>
         <% if (user?.isAdmin) { %>
           <a href="/config" class="<%= path === '/config' ? 'active' : '' %>">Config</a>
         <% } %>
-      </nav>
-
-      <div class="auth">
         <% if (user) { %>
-          <span class="user-tag"><%= user.username %> <%= user.isAdmin ? '· Admin' : '' %></span>
-          <a class="btn btn-outline" href="/logout">Se déconnecter</a>
+          <span class="user-tag"><%= user.username %><% if (user.isAdmin) { %> · Admin<% } %></span>
+          <a href="/logout" class="btn-outline">Se déconnecter</a>
         <% } else { %>
-          <a class="btn btn-primary" href="/auth/discord">Se connecter</a>
+          <a href="/auth/discord" class="btn-primary">Connexion Discord</a>
         <% } %>
-      </div>
+      </nav>
     </div>
   </header>
 
-  <!-- Contenu -->
-  <main class="container page">
+  <!-- =========================================================
+       CONTENU DE PAGE
+       ========================================================= -->
+  <main class="page container">
     <%- body %>
   </main>
 
-  <!-- Footer -->
+  <!-- =========================================================
+       FOOTER
+       ========================================================= -->
   <footer class="app-footer">
     <div class="container">
-      HOME VOUCH — <span class="muted">Dark UI</span>
+      © <%= new Date().getFullYear() %> HOME VOUCH · Tous droits réservés
     </div>
   </footer>
 
-  <!-- Modale (utilisée sur plusieurs pages) -->
-  <div id="modal-overlay" class="modal-overlay" hidden>
-    <div id="modal-panel" class="modal">
-      <button type="button" class="modal-close" aria-label="Fermer">✖</button>
-      <div id="modal-content"></div>
-    </div>
-  </div>
+  <!-- =========================================================
+       SCRIPT MENU BURGER
+       ========================================================= -->
+  <script>
+    const burger = document.getElementById('burger');
+    const navMenu = document.getElementById('navMenu');
 
-  <!-- ✅ Conteneur pour les notifications -->
-  <div id="toasts"></div>
-
-  <!-- 🔧 Scripts globaux -->
-  <script src="/js/effects.js"></script>
-  <script src="/js/main.js"></script>
+    burger.addEventListener('click', () => {
+      burger.classList.toggle('active');
+      navMenu.classList.toggle('open');
+    });
+  </script>
 </body>
 </html>
