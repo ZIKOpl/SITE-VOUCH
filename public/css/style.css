@@ -756,3 +756,75 @@ body.clicking::after {
     padding: 14px 0;
   }
 }
+/* =========================================================
+   📱 Fix affichage mobile header/navigation
+   ========================================================= */
+@media (max-width: 720px) {
+  /* Réduit la taille globale du texte */
+  body {
+    font-size: 15px;
+  }
+
+  /* Centre tout dans le header */
+  .header-row {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+
+  /* Marque plus visible et centrée */
+  .brand a {
+    font-size: 1.2rem;
+    color: var(--primary);
+  }
+
+  /* Navigation mobile : en bloc, centrée, lisible */
+  .nav {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    padding-bottom: 6px;
+  }
+
+  .nav a {
+    font-size: 0.95rem;
+    color: var(--muted);
+    text-decoration: none;
+    padding: 6px 8px;
+  }
+
+  .nav a:hover, .nav a.active {
+    color: var(--primary);
+  }
+
+  /* Le contenu principal prend bien toute la largeur */
+  .home .container {
+    flex-direction: column;
+    text-align: center;
+    gap: 24px;
+  }
+
+  .home-text h1 {
+    font-size: 2rem;
+    margin-bottom: 12px;
+  }
+
+  .home-text .subtitle {
+    font-size: 1rem;
+    line-height: 1.5;
+  }
+
+  .home-text .btn {
+    width: 100%;
+    font-size: 1rem;
+    padding: 12px;
+  }
+
+  .home-illustration img {
+    width: 80%;
+    max-width: 300px;
+    margin: 0 auto;
+  }
+}
