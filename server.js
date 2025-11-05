@@ -8,7 +8,6 @@ import path from "path";
 import { fileURLToPath } from "url";
 import chalk from "chalk";
 import expressLayouts from "express-ejs-layouts";
-import fetch from "node-fetch";
 import Guild from "./models/Guild.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -210,6 +209,25 @@ app.get("/config", ensureLogged, ensureAdmin, async (req, res) => {
     title: "Configuration",
     path: "/config",
   });
+});
+
+// ----------- PAGE PRODUITS -----------
+app.get("/products", ensureLogged, async (req, res) => {
+  try {
+    const gid = process.env.GUILD_ID;
+    const guild =
+      (await Guild.findOne({ guildId: gid }).lean()) || { products: [] };
+
+    res.render("products", {
+      user: req.user,
+      products: guild.products || [],
+      title: "Produits disponibles",
+      path: "/products",
+    });
+  } catch (err) {
+    console.error("❌ Erreur /products :", err);
+    res.status(500).send("Erreur lors du chargement des produits.");
+  }
 });
 
 // ----------- API CONFIG (add/remove corrigées) -----------
