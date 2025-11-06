@@ -145,7 +145,77 @@ app.get(
 app.get("/logout", (req, res) => req.logout(() => res.redirect("/")));
 app.get("/login-failed", (req, res) =>
   res.send("Connexion Discord échouée.")
-);
+);  
+
+// ----------- API VOUCHES -----------
+
+// ➕ Créer un vouch
+app.post("/api/vouch", ensureLogged, async (req, res) => {
+  try {
+    const gid = process.env.GUILD_ID;
+    const guild =
+      (await Guild.findOne({ guildId: gid })) ||
+      (await Guild.create({ guildId: gid }));
+
+    const { vendor, note, item, price, payment, comment } = req.body;
+
+    if (!vendor || !note)
+      return res.status(400).json({ ok: false, message: "Champs requis manquants." });
+
+    const vouch = {
+      id: guild.nextId || (guild.vouches?.length || 0) + 1,
+      vendorId: vendor,
+      vendorLabel: vendor,
+      note: Number(note),
+      item,
+      price,
+      payment,
+      author: req.user.username,
+      authorId: req.user.id,
+      comment,
+      createdAt: Date.now(),
+    };
+
+    guild.vouches = guild.vouches || [];
+    guild.vouches.push(vouch);
+    guild.nextId = (guild.vouches.length || 0) + 1;
+
+    await guild.save();
+    res.json({ ok: true, message: "Vouch créé avec succès.", id: vouch.id });
+  } catch (err) {
+    console.error("❌ Erreur création vouch :", err);
+    res.status(500).json({ ok: false, message: "Erreur serveur" });
+  }
+});
+
+// 🗑 Supprimer un vouch (corrige le 404)
+app.delete("/api/vouch/:id", ensureLogged, ensureAdmin, async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    const gid = process.env.GUILD_ID;
+
+    const guild = await Guild.findOne({ guildId: gid });
+    if (!guild)
+      return res.status(404).json({ ok: false, message: "Guild introuvable." });
+
+    const before = guild.vouches?.length || 0;
+    guild.vouches = (guild.vouches || []).filter((v) => v.id !== id);
+
+    if (guild.vouches.length === before)
+      return res.status(404).json({ ok: false, message: "Vouch introuvable." });
+
+    await resequenceGuild(guild);
+
+    res.json({
+      ok: true,
+      message: "Vouch supprimé avec succès.",
+      nextId: guild.nextId,
+    });
+  } catch (err) {
+    console.error("❌ Erreur suppression vouch :", err);
+    res.status(500).json({ ok: false, message: "Erreur serveur" });
+  }
+});
 
 // ----------- PAGES -----------
 app.get("/", (req, res) =>
