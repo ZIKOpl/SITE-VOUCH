@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- ✅ nécessaire pour mobile -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title><%= title || "Vouch" %> | HOME VOUCH</title>
 
   <!-- 🌈 Styles -->
@@ -25,8 +25,9 @@
         <span></span>
       </button>
 
-      <!-- 🔗 Navigation principale -->
+      <!-- 🔗 Navigation -->
       <nav class="nav" id="navMenu">
+        <button class="nav-close" id="navClose" aria-label="Fermer le menu">✕</button>
         <a href="/vouches" class="<%= path === '/vouches' ? 'active' : '' %>">Vouches</a>
         <a href="/leaderboard" class="<%= path === '/leaderboard' ? 'active' : '' %>">Leaderboard</a>
         <a href="/products" class="<%= path === '/products' ? 'active' : '' %>">Produits</a>
@@ -35,9 +36,9 @@
         <% } %>
 
         <% if (user) { %>
-          <a class="btn btn-outline" href="/logout">Se déconnecter</a>
+          <a class="btn btn-outline logout-btn" href="/logout">Se déconnecter</a>
         <% } else { %>
-          <a class="btn btn-primary" href="/auth/discord">Se connecter</a>
+          <a class="btn btn-primary login-btn" href="/auth/discord">Se connecter</a>
         <% } %>
       </nav>
     </div>
@@ -63,21 +64,33 @@
   <script>
     const burger = document.getElementById('burger');
     const navMenu = document.getElementById('navMenu');
+    const navClose = document.getElementById('navClose');
 
-    // ✅ Ouvrir / fermer le menu quand on clique sur le burger
-    burger?.addEventListener('click', () => {
-      burger.classList.toggle('active');
-      navMenu.classList.toggle('open');
-      document.body.classList.toggle('menu-open');
-    });
-
-    // ✅ Fermer le menu quand on clique sur un lien
-    navMenu?.querySelectorAll('a').forEach(link => {
-      link.addEventListener('click', () => {
+    const toggleMenu = (state) => {
+      if (state === 'open') {
+        burger.classList.add('active');
+        navMenu.classList.add('open');
+        document.body.classList.add('menu-open');
+      } else {
         burger.classList.remove('active');
         navMenu.classList.remove('open');
         document.body.classList.remove('menu-open');
-      });
+      }
+    };
+
+    burger?.addEventListener('click', () => toggleMenu('open'));
+    navClose?.addEventListener('click', () => toggleMenu('close'));
+
+    // Fermer quand on clique à côté
+    document.addEventListener('click', (e) => {
+      if (navMenu.classList.contains('open') && !navMenu.contains(e.target) && !burger.contains(e.target)) {
+        toggleMenu('close');
+      }
+    });
+
+    // Fermer quand on clique sur un lien
+    navMenu?.querySelectorAll('a').forEach(link => {
+      link.addEventListener('click', () => toggleMenu('close'));
     });
   </script>
 </body>
