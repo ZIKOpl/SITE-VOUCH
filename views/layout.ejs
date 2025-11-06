@@ -13,12 +13,12 @@
 
 <body>
   <!-- Header -->
-  <header class="app-header">
+    <header class="app-header">
     <div class="container header-row">
       <div class="brand"><a href="/">HOME VOUCH</a></div>
 
       <!-- 🧭 BOUTON BURGER -->
-      <button class="burger" id="burger" aria-label="Ouvrir le menu">
+      <button class="burger" id="burger" aria-label="Menu">
         <span></span>
         <span></span>
         <span></span>
@@ -32,10 +32,11 @@
         <% if (user?.isAdmin) { %>
           <a href="/config" class="<%= path === '/config' ? 'active' : '' %>">Config</a>
         <% } %>
-        <% if (!user) { %>
-          <a class="btn btn-primary" href="/auth/discord">Se connecter</a>
-        <% } else { %>
+
+        <% if (user) { %>
           <a class="btn btn-outline" href="/logout">Se déconnecter</a>
+        <% } else { %>
+          <a class="btn btn-primary" href="/auth/discord">Se connecter</a>
         <% } %>
       </nav>
     </div>
