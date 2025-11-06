@@ -2,6 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- ✅ nécessaire pour mobile -->
   <title><%= title || "Vouch" %> | HOME VOUCH</title>
 
   <!-- 🌈 Styles -->
@@ -13,18 +14,18 @@
 
 <body>
   <!-- Header -->
-    <header class="app-header">
+  <header class="app-header">
     <div class="container header-row">
       <div class="brand"><a href="/">HOME VOUCH</a></div>
 
-      <!-- 🧭 BOUTON BURGER -->
+      <!-- 🧭 Bouton Burger -->
       <button class="burger" id="burger" aria-label="Menu">
         <span></span>
         <span></span>
         <span></span>
       </button>
 
-      <!-- 🔗 NAVIGATION PRINCIPALE -->
+      <!-- 🔗 Navigation principale -->
       <nav class="nav" id="navMenu">
         <a href="/vouches" class="<%= path === '/vouches' ? 'active' : '' %>">Vouches</a>
         <a href="/leaderboard" class="<%= path === '/leaderboard' ? 'active' : '' %>">Leaderboard</a>
@@ -54,7 +55,7 @@
     </div>
   </footer>
 
-  <!-- Scripts -->
+  <!-- Scripts globaux -->
   <script src="/js/effects.js"></script>
   <script src="/js/main.js"></script>
 
@@ -63,10 +64,20 @@
     const burger = document.getElementById('burger');
     const navMenu = document.getElementById('navMenu');
 
+    // ✅ Ouvrir / fermer le menu quand on clique sur le burger
     burger?.addEventListener('click', () => {
       burger.classList.toggle('active');
       navMenu.classList.toggle('open');
       document.body.classList.toggle('menu-open');
+    });
+
+    // ✅ Fermer le menu quand on clique sur un lien
+    navMenu?.querySelectorAll('a').forEach(link => {
+      link.addEventListener('click', () => {
+        burger.classList.remove('active');
+        navMenu.classList.remove('open');
+        document.body.classList.remove('menu-open');
+      });
     });
   </script>
 </body>
