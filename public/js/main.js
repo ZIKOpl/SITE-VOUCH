@@ -8,9 +8,11 @@ document.addEventListener("DOMContentLoaded", () => {
   const grid = document.getElementById("vouchGrid");
   const openCreate = document.getElementById("openCreate");
 
+  // Sécurité : éviter les erreurs si pas de modale sur la page
   if (overlay) overlay.hidden = true;
 
   function openModal(html) {
+    if (!modalContent || !overlay || !panel) return console.warn("Modal non présente sur cette page");
     modalContent.innerHTML = html;
     overlay.hidden = false;
     requestAnimationFrame(() => {
@@ -19,7 +21,9 @@ document.addEventListener("DOMContentLoaded", () => {
     });
     document.body.style.overflow = "hidden";
   }
+
   function closeModal() {
+    if (!overlay || !panel || !modalContent) return;
     overlay.classList.remove("show");
     panel.classList.remove("show");
     setTimeout(() => {
@@ -28,11 +32,19 @@ document.addEventListener("DOMContentLoaded", () => {
       document.body.style.overflow = "";
     }, 180);
   }
-  if (closeBtn) closeBtn.addEventListener("click", closeModal);
-  if (overlay) overlay.addEventListener("click", (e) => { if (e.target === overlay) closeModal(); });
-  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !overlay.hidden) closeModal(); });
 
-  // Card -> details modal
+  // Boutons de fermeture
+  closeBtn?.addEventListener("click", closeModal);
+  overlay?.addEventListener("click", (e) => {
+    if (e.target === overlay) closeModal();
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && overlay && !overlay.hidden) closeModal();
+  });
+
+  // ===============================
+  // 📦 Modal Détails d’un vouch
+  // ===============================
   document.addEventListener("click", (e) => {
     const card = e.target.closest(".vouch-card");
     if (!card) return;
@@ -45,6 +57,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const comment = (card.dataset.comment || "").trim() || "—";
     const date = card.dataset.date || "";
     const stars = "⭐".repeat(note) + "✩".repeat(5 - note);
+
     openModal(`
       <h3>Vouch détaillé</h3>
       <div class="kv"><div class="k">Date</div><div>${date}</div></div>
@@ -58,8 +71,10 @@ document.addEventListener("DOMContentLoaded", () => {
     `);
   });
 
-  // Search filter
-  function filterCards(q){
+  // ===============================
+  // 🔍 Recherche dans les vouches
+  // ===============================
+  function filterCards(q) {
     if (!grid) return;
     const query = (q || "").trim().toLowerCase();
     const cards = grid.querySelectorAll(".vouch-card");
@@ -68,123 +83,105 @@ document.addEventListener("DOMContentLoaded", () => {
       c.style.display = s.includes(query) ? "" : "none";
     });
   }
-  if (search){
+
+  if (search) {
     let t;
     search.addEventListener("input", () => {
       clearTimeout(t);
       t = setTimeout(() => filterCards(search.value), 120);
     });
   }
-  if (clearSearch){
-    clearSearch.addEventListener("click", () => {
-      if (search) search.value = "";
-      filterCards("");
-      search?.focus();
+
+  clearSearch?.addEventListener("click", () => {
+    if (search) search.value = "";
+    filterCards("");
+    search?.focus();
+  });
+
+  // ===============================
+  // 📝 Création d’un nouveau vouch
+  // ===============================
+  openCreate?.addEventListener("click", () => {
+    const tpl = document.getElementById("tpl-create-vouch");
+    if (!tpl) return;
+    openModal(tpl.innerHTML);
+
+    const form = document.getElementById("createVouchForm");
+    const cancel = document.getElementById("cancelCreate");
+    cancel?.addEventListener("click", (e) => {
+      e.preventDefault();
+      closeModal();
     });
-  }
 
-  // Create vouch (open form)
-  if (openCreate){
-    openCreate.addEventListener("click", () => {
-      const tpl = document.getElementById("tpl-create-vouch");
-      if (!tpl) return;
-      openModal(tpl.innerHTML);
-
-      const form = document.getElementById("createVouchForm");
-      const cancel = document.getElementById("cancelCreate");
-      cancel?.addEventListener("click", (e)=>{ e.preventDefault(); closeModal(); });
-
-      form?.addEventListener("submit", async (e) => {
-        e.preventDefault();
-        const data = Object.fromEntries(new FormData(form).entries());
-        try {
-          const res = await fetch("/api/vouch", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(data)
-          });
-          const json = await res.json();
-          if (!res.ok) throw new Error(json.message || "Erreur requête");
-          closeModal();
-          alert("✅ Vouch créé et envoyé sur Discord !");
-          location.reload();
-        } catch (err) {
-          alert("❌ " + err.message);
-        }
-      });
+    form?.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const data = Object.fromEntries(new FormData(form).entries());
+      try {
+        const res = await fetch("/api/vouch", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data)
+        });
+        const json = await res.json();
+        if (!res.ok) throw new Error(json.message || "Erreur requête");
+        closeModal();
+        showToast("✅ Vouch créé et envoyé sur Discord !", "success");
+        setTimeout(() => location.reload(), 1000);
+      } catch (err) {
+        showToast("❌ " + err.message, "error");
+      }
     });
-  }
+  });
 });
 
-
-// Admin: delete vouch
+// ===============================
+// 🗑 Suppression d’un vouch (admin)
+// ===============================
 document.addEventListener("click", async (e) => {
   const btn = e.target.closest(".btn-delete");
   if (!btn) return;
   const id = btn.getAttribute("data-del-id");
   if (!id) return;
-  if (!confirm("Supprimer définitivement le vouch #"+id+" ?")) return;
+
+  if (!confirm("Supprimer définitivement le vouch #" + id + " ?")) return;
   try {
     const res = await fetch("/api/vouch/" + id, { method: "DELETE" });
     const json = await res.json();
     if (!res.ok) throw new Error(json.message || "Erreur suppression");
-    alert("✅ Vouch supprimé. Prochain numéro: #" + json.nextId);
-    location.reload();
+    showToast("✅ Vouch supprimé !", "success");
+    setTimeout(() => location.reload(), 1000);
   } catch (err) {
-    alert("❌ " + err.message);
+    showToast("❌ " + err.message, "error");
   }
 });
 
 // ===============================
-// 🔔 SYSTÈME DE NOTIFICATIONS
+// 🔔 TOASTS (notifications)
 // ===============================
 window.showToast = function (message, type = "info", duration = 4000) {
-  const container = document.getElementById("toasts");
-  if (!container) return console.error("Conteneur de toast introuvable");
+  let container = document.getElementById("toasts");
+  if (!container) {
+    container = document.createElement("div");
+    container.id = "toasts";
+    document.body.appendChild(container);
+  }
 
   const toast = document.createElement("div");
   toast.className = `toast ${type}`;
   toast.textContent = message;
 
   container.appendChild(toast);
-
-  // Disparition automatique
-  setTimeout(() => {
-    toast.style.animation = "toastFadeOut 0.5s ease forwards";
-    setTimeout(() => toast.remove(), 500);
-  }, duration);
-};
-
-// ===========================
-// ✅ Toast System
-// ===========================
-
-function showToast(message, type = "info") {
-  const toastContainer = document.getElementById("toasts");
-  if (!toastContainer) return;
-
-  const toast = document.createElement("div");
-  toast.className = `toast ${type}`;
-  toast.innerHTML = `
-    <div class="toast-content">${message}</div>
-  `;
-
-  toastContainer.appendChild(toast);
-
-  // Animation d’apparition
   setTimeout(() => toast.classList.add("show"), 50);
 
-  // Disparition après 4s
   setTimeout(() => {
     toast.classList.remove("show");
     setTimeout(() => toast.remove(), 300);
-  }, 4000);
-}
+  }, duration);
+};
 
-// ===========================
-// ✅ Confirm Dialog personnalisé
-// ===========================
-
+// ===============================
+// ✅ Boîte de confirmation personnalisée
+// ===============================
 function showConfirm(message) {
   return new Promise((resolve) => {
     const overlay = document.createElement("div");
@@ -210,4 +207,3 @@ function showConfirm(message) {
     };
   });
 }
-
