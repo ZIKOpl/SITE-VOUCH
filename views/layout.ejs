@@ -53,16 +53,6 @@
     </div>
   </footer>
 
-  <!-- Modale -->
-  <div id="modal-overlay" class="modal-overlay" hidden>
-    <div id="modal-panel" class="modal">
-      <button type="button" class="modal-close" aria-label="Fermer">✖</button>
-      <div id="modal-content"></div>
-    </div>
-  </div>
-
-  <div id="toasts"></div>
-
   <!-- Scripts -->
   <script src="/js/effects.js"></script>
   <script src="/js/main.js"></script>
@@ -72,7 +62,7 @@
     const burger = document.getElementById('burger');
     const navMenu = document.getElementById('navMenu');
 
-    burger.addEventListener('click', () => {
+    burger?.addEventListener('click', () => {
       burger.classList.toggle('active');
       navMenu.classList.toggle('open');
       document.body.classList.toggle('menu-open');
