@@ -1,17 +1,15 @@
 /* =========================================================
    🎨 THEME HOME VOUCH — Noir & Rouge Edition (Pro)
-   Version unifiée : fond quadrillé, halo rouge, pulsation,
-   interface d’accueil professionnelle et épurée.
    ========================================================= */
 
 /* 🌈 Variables principales */
 :root {
-  --bg: #000000;
+  --bg: #000;
   --panel: #0a0a0a;
-  --panel2: #111111;
+  --panel2: #111;
   --text: #f2f2f2;
   --muted: #b3b3b3;
-  --primary: #e60000; /* Rouge vif */
+  --primary: #e60000;
   --border: #1a1a1a;
   --accent: #ff0000;
 }
@@ -26,19 +24,15 @@ body {
   margin: 0;
   color: var(--text);
   font-family: "Poppins", system-ui, -apple-system, "Segoe UI", Roboto, Arial;
-
-  /* 🔳 Fond quadrillé noir */
-  background-color: #000;
+  background-color: var(--bg);
   background-image:
     linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px),
     linear-gradient(0deg, rgba(255,255,255,0.05) 1px, transparent 1px);
   background-size: 40px 40px;
   background-attachment: fixed;
-
   animation: bgShift 16s ease-in-out infinite alternate;
 }
 
-/* 💫 Animation subtile du fond */
 @keyframes bgShift {
   0% { background-position: 0 0, 0 0; }
   100% { background-position: 30px -20px, -40px 20px; }
@@ -79,11 +73,11 @@ body {
   color: var(--muted);
   text-decoration: none;
   margin: 0 10px;
-  position: relative;
 }
 .nav a.active, .nav a:hover { color: var(--primary); }
 .user-tag { margin-right: 10px; color: var(--muted); }
 .page { padding: 26px 0 40px; }
+
 .app-footer {
   border-top: 1px solid var(--border);
   color: var(--muted);
@@ -177,9 +171,7 @@ body {
 
 /* =========================================================
    LEADERBOARD / PODIUM
-   ========================================================= *
-
-/* Podium - alignement vertical élégant */
+   ========================================================= */
 .podium {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
@@ -188,8 +180,6 @@ body {
   justify-content: center;
   margin: 30px 0 40px;
 }
-
-/* Carte podium */
 .pod {
   background: var(--panel2);
   border: 1px solid var(--border);
@@ -203,8 +193,6 @@ body {
   transform: translateY(-3px);
   box-shadow: 0 12px 32px rgba(255, 0, 0, 0.25);
 }
-
-/* Profil (avatar + pseudo + stats) */
 .pod .profile {
   display: flex;
   flex-direction: column;
@@ -220,20 +208,10 @@ body {
   background: #000;
   object-fit: cover;
 }
-.pod .profile .info strong {
-  font-size: 1.1rem;
-}
-.pod.gold .profile img {
-  border-color: gold;
-}
-.pod.silver .profile img {
-  border-color: silver;
-}
-.pod.bronze .profile img {
-  border-color: #cd7f32;
-}
+.pod.gold .profile img { border-color: gold; }
+.pod.silver .profile img { border-color: silver; }
+.pod.bronze .profile img { border-color: #cd7f32; }
 
-/* Liste des autres */
 .lb {
   background: var(--panel);
   border: 1px solid var(--border);
@@ -248,14 +226,9 @@ body {
   border-bottom: 1px solid var(--border);
   transition: background 0.2s ease;
 }
-.lb-row:last-child {
-  border-bottom: none;
-}
-.lb-row:hover {
-  background: rgba(255, 0, 0, 0.05);
-}
+.lb-row:last-child { border-bottom: none; }
+.lb-row:hover { background: rgba(255, 0, 0, 0.05); }
 
-/* Pseudo + avatar */
 .lb-vendor {
   display: flex;
   align-items: center;
@@ -269,27 +242,8 @@ body {
   border: 1px solid var(--border);
   object-fit: cover;
 }
-.lb-rank {
-  font-weight: 700;
-  color: var(--primary);
-  text-align: center;
-}
-.lb-count {
-  text-align: right;
-  color: var(--muted);
-}
-
-/* Responsive */
-@media (max-width: 720px) {
-  .lb-row {
-    grid-template-columns: 50px 1fr 90px;
-    font-size: 0.95rem;
-  }
-  .pod .profile img {
-    width: 56px;
-    height: 56px;
-  }
-}
+.lb-rank { font-weight: 700; color: var(--primary); text-align: center; }
+.lb-count { text-align: right; color: var(--muted); }
 
 /* =========================================================
    MODAL
@@ -314,7 +268,6 @@ body {
   border: 1px solid var(--border);
   border-radius: 18px;
   padding: 20px;
-  position: relative;
   box-shadow: 0 24px 64px rgba(0,0,0,.75);
   transform: scale(.96);
   transition: transform .18s;
@@ -337,7 +290,7 @@ body {
 }
 
 /* =========================================================
-   🏠 PAGE D’ACCUEIL — Design épuré et professionnel
+   PAGE D’ACCUEIL
    ========================================================= */
 .home {
   display: flex;
@@ -354,8 +307,6 @@ body {
   gap: 60px;
   flex-wrap: wrap;
 }
-
-/* --- Texte principal --- */
 .home-text {
   flex: 1 1 480px;
   max-width: 600px;
@@ -374,8 +325,6 @@ body {
   margin-bottom: 32px;
   line-height: 1.7;
 }
-
-/* --- Boutons --- */
 .home-text .btn {
   font-size: 1.05rem;
   padding: 12px 20px;
@@ -387,8 +336,6 @@ body {
   transform: translateY(-2px);
   box-shadow: 0 6px 22px rgba(230,0,0,0.4);
 }
-
-/* --- Illustration --- */
 .home-illustration {
   flex: 1 1 400px;
   display: flex;
@@ -405,28 +352,7 @@ body {
 .home-illustration img:hover { opacity: 1; }
 
 /* =========================================================
-   ANIMATIONS
-   ========================================================= */
-@keyframes fadeIn { from { opacity: 0; transform: translateY(2px); } to { opacity: 1; transform: translateY(0); } }
-@keyframes fadeInUp { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
-@keyframes slideDown { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
-
-/* =========================================================
-   RESPONSIVE
-   ========================================================= */
-@media (max-width: 900px) {
-  .home .container { flex-direction: column; text-align: center; }
-  .home-text h1 { font-size: 2.4rem; }
-  .home-illustration { margin-top: 30px; }
-}
-@media (max-width: 720px) {
-  .nav { display: none; }
-  .form-row { grid-template-columns: 1fr; }
-  .podium { grid-template-columns: 1fr; }
-}
-
-/* =========================================================
-   🔥 EFFETS VISUELS GLOBAUX (clic & halo)
+   EFFETS VISUELS
    ========================================================= */
 body::after {
   content: "";
@@ -446,8 +372,6 @@ body.clicking::after {
   0% { opacity: 0.8; transform: scale(1); }
   100% { opacity: 0; transform: scale(2); }
 }
-
-/* Halo rouge du curseur */
 .cursor-light {
   position: fixed;
   width: 12px;
@@ -460,6 +384,10 @@ body.clicking::after {
   transform: translate(-50%, -50%);
   z-index: 99999;
 }
+
+/* =========================================================
+   PRODUITS
+   ========================================================= */
 .product-card {
   display: flex;
   flex-direction: column;
@@ -473,26 +401,14 @@ body.clicking::after {
   object-fit: cover;
   background: #000;
 }
-.product-body h2 {
-  margin-bottom: 8px;
-  font-size: 1.3rem;
-}
-.price-tag {
-  font-weight: 600;
-  color: var(--primary);
-  margin-top: 10px;
-}
-.product-actions {
-  text-align: right;
-  margin-top: 10px;
-}
-.product-desc {
-  white-space: pre-line; /* Respecte les sauts de ligne du texte */
-}
+.product-body h2 { margin-bottom: 8px; font-size: 1.3rem; }
+.price-tag { font-weight: 600; color: var(--primary); margin-top: 10px; }
+.product-actions { text-align: right; margin-top: 10px; }
+.product-desc { white-space: pre-line; }
 
-/* =======================
-   ✅ Toasts visuels
-======================= */
+/* =========================================================
+   TOASTS & CONFIRM BOX
+   ========================================================= */
 #toasts {
   position: fixed;
   bottom: 20px;
@@ -502,7 +418,6 @@ body.clicking::after {
   flex-direction: column;
   gap: 10px;
 }
-
 .toast {
   opacity: 0;
   transform: translateX(30px);
@@ -516,19 +431,11 @@ body.clicking::after {
   transition: all 0.3s ease;
   min-width: 240px;
 }
-
-.toast.show {
-  opacity: 1;
-  transform: translateX(0);
-}
-
+.toast.show { opacity: 1; transform: translateX(0); }
 .toast.success { border-left-color: #00d26a; }
-.toast.error   { border-left-color: #ff4040; }
-.toast.info    { border-left-color: #5c7aff; }
+.toast.error { border-left-color: #ff4040; }
+.toast.info { border-left-color: #5c7aff; }
 
-/* =======================
-   ✅ Confirm Box
-======================= */
 .confirm-overlay {
   position: fixed;
   inset: 0;
@@ -539,7 +446,6 @@ body.clicking::after {
   z-index: 9998;
   animation: fadeIn 0.2s ease;
 }
-
 .confirm-box {
   background: #0d0d0d;
   color: #fff;
@@ -550,19 +456,15 @@ body.clicking::after {
   width: min(90%, 340px);
   text-align: center;
 }
-
-.confirm-box p {
-  margin-bottom: 16px;
-  font-size: 16px;
-}
-
+.confirm-box p { margin-bottom: 16px; font-size: 16px; }
 .confirm-buttons {
   display: flex;
   justify-content: center;
   gap: 12px;
 }
+
 /* =========================================================
-   📱 MENU BURGER + NAVIGATION MOBILE
+   MENU BURGER
    ========================================================= */
 .burger {
   display: none;
@@ -590,7 +492,6 @@ body.clicking::after {
 
 @media (max-width: 720px) {
   .burger { display: flex; }
-
   .nav {
     position: fixed;
     top: 0;
@@ -608,11 +509,7 @@ body.clicking::after {
     transition: transform 0.3s ease;
     z-index: 1000;
   }
-
-  .nav.open {
-    transform: translateX(0);
-  }
-
+  .nav.open { transform: translateX(0); }
   .nav a {
     display: block;
     width: 100%;
@@ -622,6 +519,5 @@ body.clicking::after {
     border-bottom: 1px solid #111;
   }
   .nav a:hover, .nav a.active { color: var(--primary); }
-
   body.menu-open { overflow: hidden; }
 }
