@@ -521,3 +521,63 @@ body.clicking::after {
   .nav a:hover, .nav a.active { color: var(--primary); }
   body.menu-open { overflow: hidden; }
 }
+/* =========================================================
+   📱 LEADERBOARD — VERSION MOBILE OPTIMISÉE
+   ========================================================= */
+@media (max-width: 720px) {
+
+  /* Podium vertical centré */
+  .podium {
+    grid-template-columns: 1fr;
+    gap: 24px;
+    justify-items: center;
+    text-align: center;
+  }
+
+  .pod {
+    width: 90%;
+    max-width: 340px;
+    padding: 20px 16px;
+    border-radius: 14px;
+  }
+
+  .pod .profile img {
+    width: 80px;
+    height: 80px;
+  }
+
+  .pod .profile strong {
+    font-size: 1.2rem;
+  }
+
+  /* Classement liste (lb) */
+  .lb {
+    margin-top: 10px;
+    border-radius: 12px;
+  }
+
+  .lb-row {
+    grid-template-columns: 50px 1fr 70px;
+    padding: 10px 12px;
+    font-size: 0.95rem;
+  }
+
+  .lb-vendor img {
+    width: 28px;
+    height: 28px;
+  }
+
+  .lb-rank {
+    font-size: 1rem;
+  }
+
+  /* Espacement général */
+  .page {
+    padding: 20px 10px;
+  }
+
+  /* Animation douce au scroll */
+  .pod, .lb-row {
+    animation: fadeInUp 0.4s ease both;
+  }
+}
