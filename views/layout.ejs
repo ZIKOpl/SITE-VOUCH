@@ -17,12 +17,14 @@
     <div class="container header-row">
       <div class="brand"><a href="/">HOME VOUCH</a></div>
 
-      <!-- 🧭 Bouton burger mobile -->
-      <button class="burger" id="burger" aria-label="Menu">
-        <span></span><span></span><span></span>
+      <!-- 🧭 BOUTON BURGER -->
+      <button class="burger" id="burger" aria-label="Ouvrir le menu">
+        <span></span>
+        <span></span>
+        <span></span>
       </button>
 
-      <!-- 🔗 Navigation principale -->
+      <!-- 🔗 NAVIGATION PRINCIPALE -->
       <nav class="nav" id="navMenu">
         <a href="/vouches" class="<%= path === '/vouches' ? 'active' : '' %>">Vouches</a>
         <a href="/leaderboard" class="<%= path === '/leaderboard' ? 'active' : '' %>">Leaderboard</a>
@@ -65,7 +67,7 @@
   <script src="/js/effects.js"></script>
   <script src="/js/main.js"></script>
 
-  <!-- 📱 Script menu burger -->
+  <!-- 📱 Script du menu burger -->
   <script>
     const burger = document.getElementById('burger');
     const navMenu = document.getElementById('navMenu');
