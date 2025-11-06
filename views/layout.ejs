@@ -30,27 +30,12 @@
         <% if (user?.isAdmin) { %>
           <a href="/config" class="<%= path === '/config' ? 'active' : '' %>">Config</a>
         <% } %>
-
-        <!-- Auth dans le menu mobile -->
-        <div class="mobile-auth">
-          <% if (user) { %>
-            <span class="user-tag"><%= user.username %> <%= user.isAdmin ? '· Admin' : '' %></span>
-            <a class="btn btn-outline" href="/logout">Se déconnecter</a>
-          <% } else { %>
-            <a class="btn btn-primary" href="/auth/discord">Se connecter</a>
-          <% } %>
-        </div>
-      </nav>
-
-      <!-- Auth (version desktop uniquement) -->
-      <div class="auth desktop-auth">
-        <% if (user) { %>
-          <span class="user-tag"><%= user.username %> <%= user.isAdmin ? '· Admin' : '' %></span>
-          <a class="btn btn-outline" href="/logout">Se déconnecter</a>
-        <% } else { %>
+        <% if (!user) { %>
           <a class="btn btn-primary" href="/auth/discord">Se connecter</a>
+        <% } else { %>
+          <a class="btn btn-outline" href="/logout">Se déconnecter</a>
         <% } %>
-      </div>
+      </nav>
     </div>
   </header>
 
@@ -66,7 +51,7 @@
     </div>
   </footer>
 
-  <!-- Modale (utilisée sur plusieurs pages) -->
+  <!-- Modale -->
   <div id="modal-overlay" class="modal-overlay" hidden>
     <div id="modal-panel" class="modal">
       <button type="button" class="modal-close" aria-label="Fermer">✖</button>
@@ -74,10 +59,9 @@
     </div>
   </div>
 
-  <!-- ✅ Conteneur pour les notifications -->
   <div id="toasts"></div>
 
-  <!-- 🔧 Scripts globaux -->
+  <!-- Scripts -->
   <script src="/js/effects.js"></script>
   <script src="/js/main.js"></script>
 
