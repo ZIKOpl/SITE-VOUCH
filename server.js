@@ -9,6 +9,8 @@ import { fileURLToPath } from "url";
 import chalk from "chalk";
 import expressLayouts from "express-ejs-layouts";
 import Guild from "./models/Guild.js";
+import multer from "multer";
+import fs from "fs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -352,10 +354,36 @@ app.post("/api/config/vendor/remove", ensureLogged, ensureAdmin, async (req, res
   }
 });
 
-// ➕ Ajouter un item
-app.post("/api/config/item/add", ensureLogged, ensureAdmin, async (req, res) => {
+// ------------ UPLOAD IMAGE PRODUITS ------------ //
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const dir = "./uploads/products";
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    cb(null, dir);
+  },
+  filename: (req, file, cb) => {
+    const ext = file.originalname.split(".").pop();
+    cb(null, `product_${Date.now()}.${ext}`);
+  }
+});
+
+const upload = multer({
+  storage,
+  fileFilter: (req, file, cb) => {
+    const allowed = ["image/png", "image/jpeg", "image/jpg", "image/webp"];
+    if (!allowed.includes(file.mimetype)) {
+      return cb(new Error("Format non supporté (PNG, JPG, WEBP)."));
+    }
+    cb(null, true);
+  }
+});
+
+// ➕ Ajouter un produit avec upload image
+app.post("/api/product", ensureLogged, ensureAdmin, upload.single("image"), async (req, res) => {
   try {
-    const { name } = req.body;
+    const { name, price, description } = req.body;
+
     if (!name?.trim())
       return res.status(400).json({ ok: false, message: "Nom requis." });
 
@@ -364,38 +392,50 @@ app.post("/api/config/item/add", ensureLogged, ensureAdmin, async (req, res) => 
       (await Guild.findOne({ guildId: gid })) ||
       (await Guild.create({ guildId: gid }));
 
-    guild.items = guild.items || [];
-    if (!guild.items.includes(name.trim())) guild.items.push(name.trim());
+    guild.products = guild.products || [];
+
+    const product = {
+      id: (guild.products[guild.products.length - 1]?.id || 0) + 1,
+      name: name.trim(),
+      description: description || "",
+      price: price ? Number(price) : null,
+      image: req.file ? `/uploads/products/${req.file.filename}` : null,
+      createdAt: Date.now(),
+    };
+
+    guild.products.push(product);
     await guild.save();
-    res.json({ ok: true });
+
+    res.json({ ok: true, id: product.id });
   } catch (err) {
-    console.error("❌ Erreur ajout item :", err);
-    res.status(500).json({ ok: false, message: "Erreur serveur" });
+    console.error("❌ Erreur ajout produit :", err);
+    res.status(500).json({ ok: false, message: err.message });
   }
 });
 
-// 🗑 Supprimer un item (corrigé)
-app.post("/api/config/item/remove", ensureLogged, ensureAdmin, async (req, res) => {
+// 🗑 Supprimer un produit (+ image)
+app.delete("/api/product/:id", ensureLogged, ensureAdmin, async (req, res) => {
   try {
-    const { name } = req.body;
-    if (!name?.trim())
-      return res.status(400).json({ ok: false, message: "Nom requis." });
-
+    const id = Number(req.params.id);
     const gid = process.env.GUILD_ID;
+
     const guild = await Guild.findOne({ guildId: gid });
     if (!guild)
       return res.status(404).json({ ok: false, message: "Guild introuvable." });
 
-    const before = guild.items?.length || 0;
-    guild.items = (guild.items || []).filter((it) => it !== name.trim());
+    const p = guild.products.find(p => p.id === id);
 
-    if (guild.items.length === before)
-      return res.status(404).json({ ok: false, message: "Item introuvable." });
+    if (p?.image) {
+      const filepath = "." + p.image;
+      if (fs.existsSync(filepath)) fs.unlinkSync(filepath);
+    }
 
+    guild.products = guild.products.filter(p => p.id !== id);
     await guild.save();
-    res.json({ ok: true, message: "Item supprimé." });
+
+    res.json({ ok: true });
   } catch (err) {
-    console.error("❌ Erreur suppression item :", err);
+    console.error("❌ Erreur suppression produit :", err);
     res.status(500).json({ ok: false, message: "Erreur serveur" });
   }
 });
