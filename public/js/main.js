@@ -96,7 +96,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
       form?.addEventListener("submit", async (e) => {
         e.preventDefault();
-        const data = Object.fromEntries(new FormData(form).entries());
+        const formData = new FormData(form);
+        const data = {
+          vendor: formData.get("vendeur"),
+          note: Number(formData.get("note")),
+          item: formData.get("item"),
+          price: formData.get("prix"),
+          payment: formData.get("moyen_de_paiement"),
+          comment: formData.get("commentaire"),
+          anonymous: formData.get("anonyme") === "true",
+          qty: Number(formData.get("quantite")) || 1
+        };
         try {
           const res = await fetch("/api/vouch", {
             method: "POST",
@@ -106,16 +116,15 @@ document.addEventListener("DOMContentLoaded", () => {
           const json = await res.json();
           if (!res.ok) throw new Error(json.message || "Erreur requête");
           closeModal();
-          alert("✅ Vouch créé et envoyé sur Discord !");
+          showToast("✅ Vouch créé et envoyé sur Discord !", "success");
           location.reload();
         } catch (err) {
-          alert("❌ " + err.message);
+          showToast("❌ " + err.message, "error");
         }
       });
     });
   }
 });
-
 
 // Admin: delete vouch
 document.addEventListener("click", async (e) => {
@@ -128,63 +137,35 @@ document.addEventListener("click", async (e) => {
     const res = await fetch("/api/vouch/" + id, { method: "DELETE" });
     const json = await res.json();
     if (!res.ok) throw new Error(json.message || "Erreur suppression");
-    alert("✅ Vouch supprimé. Prochain numéro: #" + json.nextId);
+    showToast("✅ Vouch supprimé. Prochain numéro: #" + json.nextId, "success");
     location.reload();
   } catch (err) {
-    alert("❌ " + err.message);
+    showToast("❌ " + err.message, "error");
   }
 });
 
 // ===============================
 // 🔔 SYSTÈME DE NOTIFICATIONS
 // ===============================
-window.showToast = function (message, type = "info", duration = 4000) {
+function showToast(message, type = "info", duration = 4000) {
   const container = document.getElementById("toasts");
   if (!container) return console.error("Conteneur de toast introuvable");
 
   const toast = document.createElement("div");
   toast.className = `toast ${type}`;
-  toast.textContent = message;
-
+  toast.innerHTML = `<div class="toast-content">${message}</div>`;
   container.appendChild(toast);
 
-  // Disparition automatique
-  setTimeout(() => {
-    toast.style.animation = "toastFadeOut 0.5s ease forwards";
-    setTimeout(() => toast.remove(), 500);
-  }, duration);
-};
-
-// ===========================
-// ✅ Toast System
-// ===========================
-
-function showToast(message, type = "info") {
-  const toastContainer = document.getElementById("toasts");
-  if (!toastContainer) return;
-
-  const toast = document.createElement("div");
-  toast.className = `toast ${type}`;
-  toast.innerHTML = `
-    <div class="toast-content">${message}</div>
-  `;
-
-  toastContainer.appendChild(toast);
-
-  // Animation d’apparition
   setTimeout(() => toast.classList.add("show"), 50);
-
-  // Disparition après 4s
   setTimeout(() => {
     toast.classList.remove("show");
     setTimeout(() => toast.remove(), 300);
-  }, 4000);
+  }, duration);
 }
 
 // ===========================
 // ✅ Confirm Dialog personnalisé
 // ===========================
-
 function showConfirm(message) {
   return new Promise((resolve) => {
     const overlay = document.createElement("div");
@@ -210,4 +191,3 @@ function showConfirm(message) {
     };
   });
 }
-
