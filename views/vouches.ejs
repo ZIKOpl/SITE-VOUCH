@@ -27,7 +27,7 @@
 
         <div class="card-body">
           <p><span class="muted">Vendeur :</span> <strong><%= v.vendorLabel || (v.vendorId ? '@'+v.vendorId : 'Inconnu') %></strong></p>
-          <p><span class="muted">Item :</span> <strong>x<%= v.qty %> <%= v.item %></strong> — <%= v.prix %> via <%= v.payment %></p>
+          <p><span class="muted">Item :</span> <strong>x<%= v.qty %> <%= v.item %></strong> — <%= v.price %> via <%= v.payment %></p>
           <p><span class="muted">Par :</span> <%= v.anonymous ? "Anonyme" : v.authorTag %></p>
           <p><span class="muted">Commentaire :</span> <%= (v.comment && v.comment.trim().length) ? v.comment : "—" %></p>
           <% if (v.source === "site") { %>
@@ -45,12 +45,13 @@
   </div>
 </section>
 
-<!-- Modale de création -->
-<script type="text/template" id="tpl-create-vouch">
-  <h3>Créer un vouch</h3>
-  <form id="createVouchForm">
-    <div class="form-row">
-      <div class="full">
+<!-- Modale de création active -->
+<div id="modalCreateVouch" class="modal" style="display:none;">
+  <div class="modal-content">
+    <span id="closeCreate" class="close">&times;</span>
+    <h3>Créer un vouch</h3>
+    <form id="createVouchForm">
+      <div class="form-row">
         <label>Vendeur</label>
         <select name="vendeur" required>
           <% (vendors||[]).forEach(v => { %>
@@ -58,14 +59,13 @@
           <% }) %>
         </select>
       </div>
-    </div>
 
-    <div class="form-row">
-      <div>
+      <div class="form-row">
         <label>Quantité</label>
-        <input class="input" name="quantite" type="number" min="1" value="1" required>
+        <input type="number" name="quantite" min="1" value="1" required>
       </div>
-      <div>
+
+      <div class="form-row">
         <label>Item</label>
         <select name="item" required>
           <% (items||[]).forEach(it => { %>
@@ -73,25 +73,22 @@
           <% }) %>
         </select>
       </div>
-    </div>
 
-    <div class="form-row">
-      <div>
-        <label>Prix (ex: 2.5€)</label>
-        <input class="input" name="prix" type="text" placeholder="2.5€" required>
+      <div class="form-row">
+        <label>Prix</label>
+        <input type="text" name="prix" placeholder="ex: 2.5€" required>
       </div>
-      <div>
-        <label>Paiement</label>
+
+      <div class="form-row">
+        <label>Moyen de paiement</label>
         <select name="moyen_de_paiement" required>
           <% (payments||["PayPal","Crypto","LTC"]).forEach(p => { %>
             <option value="<%- p %>"><%- p %></option>
           <% }) %>
         </select>
       </div>
-    </div>
 
-    <div class="form-row">
-      <div>
+      <div class="form-row">
         <label>Note /5</label>
         <select name="note" required>
           <% for (let i = 5; i >= 0; i--) { %>
@@ -99,29 +96,31 @@
           <% } %>
         </select>
       </div>
-      <div>
+
+      <div class="form-row">
         <label>Anonyme ?</label>
         <select name="anonyme">
-          <option value="false">Non</option><option value="true">Oui</option>
+          <option value="false">Non</option>
+          <option value="true">Oui</option>
         </select>
       </div>
-    </div>
 
-    <div class="form-row full">
-      <label>Commentaire (optionnel)</label>
-      <textarea class="input" name="commentaire" rows="3" placeholder="Ton avis..."></textarea>
-    </div>
+      <div class="form-row">
+        <label>Commentaire (optionnel)</label>
+        <textarea name="commentaire" rows="3" placeholder="Ton avis..."></textarea>
+      </div>
 
-    <div class="form-row full" style="text-align:right">
-      <button type="button" class="btn btn-outline" id="cancelCreate">Annuler</button>
-      <button type="submit" class="btn btn-primary">Envoyer le vouch</button>
-    </div>
-  </form>
-</script>
+      <div class="form-row" style="text-align:right">
+        <button type="button" id="cancelCreate" class="btn btn-outline">Annuler</button>
+        <button type="submit" class="btn btn-primary">Envoyer</button>
+      </div>
+    </form>
+  </div>
+</div>
 
 <script>
 document.addEventListener("DOMContentLoaded", () => {
-  // 🗑 Suppression d’un vouch
+  // 🔹 Suppression d’un vouch
   document.querySelectorAll('.btn-delete').forEach(btn => {
     btn.addEventListener('click', async () => {
       const id = btn.getAttribute('data-id');
@@ -131,7 +130,6 @@ document.addEventListener("DOMContentLoaded", () => {
       try {
         const res = await fetch(`/api/vouch/${id}`, { method: "DELETE" });
         const json = await res.json();
-
         if (json.ok) {
           showToast("✅ Vouch supprimé avec succès", "success");
           setTimeout(() => location.reload(), 1200);
@@ -144,7 +142,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
-  // 🔍 Recherche rapide
+  // 🔹 Recherche rapide
   const search = document.getElementById('search');
   const clear = document.getElementById('clearSearch');
   const cards = [...document.querySelectorAll('.vouch-card')];
@@ -160,6 +158,57 @@ document.addEventListener("DOMContentLoaded", () => {
   clear?.addEventListener('click', () => {
     search.value = '';
     cards.forEach(c => (c.style.display = ''));
+  });
+
+  // 🔹 Modale création vouch
+  const modal = document.getElementById("modalCreateVouch");
+  const openBtn = document.getElementById("openCreate");
+  const closeBtn = document.getElementById("closeCreate");
+  const cancelBtn = document.getElementById("cancelCreate");
+  const form = document.getElementById("createVouchForm");
+
+  openBtn?.addEventListener("click", () => modal.style.display = "block");
+  closeBtn?.addEventListener("click", () => modal.style.display = "none");
+  cancelBtn?.addEventListener("click", () => modal.style.display = "none");
+  window.addEventListener("click", e => { if(e.target == modal) modal.style.display = "none"; });
+
+  // 🔹 Soumission création vouch
+  form?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const formData = new FormData(form);
+    const body = {
+      vendor: formData.get("vendeur"),
+      note: Number(formData.get("note")),
+      item: formData.get("item"),
+      price: formData.get("prix"),
+      payment: formData.get("moyen_de_paiement"),
+      comment: formData.get("commentaire"),
+      anonymous: formData.get("anonyme") === "true",
+      qty: Number(formData.get("quantite")) || 1
+    };
+    if (!body.vendor || isNaN(body.note)) {
+      alert("Veuillez remplir correctement le vendeur et la note.");
+      return;
+    }
+    try {
+      const res = await fetch("/api/vouch", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+      });
+      const data = await res.json();
+      if (data.ok) {
+        alert(`Vouch créé avec succès ! ID : ${data.id}`);
+        form.reset();
+        modal.style.display = "none";
+        location.reload();
+      } else {
+        alert(`Erreur : ${data.message}`);
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Erreur serveur, veuillez réessayer plus tard.");
+    }
   });
 });
 </script>
