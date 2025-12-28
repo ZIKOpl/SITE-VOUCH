@@ -154,38 +154,53 @@ app.get("/login-failed", (req, res) =>
 // ➕ Créer un vouch
 app.post("/api/vouch", ensureLogged, async (req, res) => {
   try {
-    const gid = process.env.GUILD_ID;
-    const guild =
-      (await Guild.findOne({ guildId: gid })) ||
-      (await Guild.create({ guildId: gid }));
-
+    // Vérification des données
     const { vendor, note, item, price, payment, comment } = req.body;
 
-    if (!vendor || !note)
-      return res.status(400).json({ ok: false, message: "Champs requis manquants." });
+    if (!vendor || note === undefined || note === null) {
+      return res.status(400).json({ ok: false, message: "Champs requis manquants : vendor ou note." });
+    }
 
+    const numericNote = Number(note);
+    if (isNaN(numericNote)) {
+      return res.status(400).json({ ok: false, message: "Le champ 'note' doit être un nombre." });
+    }
+
+    // Récupération ou création du guild
+    const gid = process.env.GUILD_ID;
+    let guild = await Guild.findOne({ guildId: gid });
+
+    if (!guild) {
+      guild = await Guild.create({ guildId: gid, vouches: [], nextId: 1 });
+    }
+
+    guild.vouches = guild.vouches || [];
+
+    // Création du vouch
     const vouch = {
-      id: guild.nextId || (guild.vouches?.length || 0) + 1,
+      id: guild.nextId,
       vendorId: vendor,
       vendorLabel: vendor,
-      note: Number(note),
-      item,
-      price,
-      payment,
-      author: req.user.username,
-      authorId: req.user.id,
-      comment,
+      note: numericNote,
+      item: item || "",
+      price: price || "",
+      payment: payment || "",
+      author: req.user.username || "Inconnu",
+      authorId: req.user.id || "0",
+      comment: comment || "",
       createdAt: Date.now(),
     };
 
-    guild.vouches = guild.vouches || [];
     guild.vouches.push(vouch);
-    guild.nextId = (guild.vouches.length || 0) + 1;
+    guild.nextId += 1; // Incrémentation sécurisée
 
     await guild.save();
+
+    console.log("✅ Vouch créé :", vouch);
+
     res.json({ ok: true, message: "Vouch créé avec succès.", id: vouch.id });
   } catch (err) {
-    console.error("❌ Erreur création vouch :", err);
+    console.error("❌ Erreur création vouch :", err.message, err.stack);
     res.status(500).json({ ok: false, message: "Erreur serveur" });
   }
 });
